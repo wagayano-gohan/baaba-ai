@@ -1,0 +1,154 @@
+.schedule-list-screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.schedule-list-screen__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.schedule-list-screen__heading {
+  margin: 0 0 24px;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.schedule-list-screen__empty {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.schedule-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.schedule-card {
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 24px;
+}
+
+.schedule-card__date {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-label);
+  line-height: 1.6;
+}
+
+.schedule-card__time {
+  margin: 12px 0 0;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.schedule-card__content {
+  margin: 12px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.schedule-card__actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 16px;
+}
+
+.schedule-card__button {
+  flex: 1 1 48%;
+  min-height: 88px;
+  border-radius: var(--radius);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.schedule-card__button--edit {
+  background: transparent;
+  color: var(--color-accent);
+  border: 2px solid var(--color-accent);
+}
+
+.schedule-card__button--delete {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
+.delete-dialog-overlay {
+  /* ドキュメント全体（縦に長いカードリスト）ではなく、常にビューポート（.app-shell）
+     基準で中央配置するため fixed を使用する。position: absolute だとカード一覧の
+     スクロール量によってはビューポート外に配置され、確認ボタンに到達できなくなる。 */
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 44, 46, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 20;
+}
+
+.delete-dialog {
+  width: 100%;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.delete-dialog__heading {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: center;
+  line-height: 1.6;
+}
+
+.delete-dialog__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.delete-dialog__button {
+  width: 100%;
+  min-height: 88px;
+  border-radius: var(--radius);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.delete-dialog__button--confirm {
+  background: var(--color-danger);
+  color: #ffffff;
+}
+
+.delete-dialog__button--cancel {
+  background: var(--color-neutral-bg);
+  color: var(--color-text);
+}

@@ -1,0 +1,120 @@
+.home-screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-screen__scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.home-screen__header {
+  padding: 24px;
+  padding-top: max(24px, env(safe-area-inset-top));
+}
+
+.home-screen__date {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.home-screen__greeting {
+  margin: 8px 0 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.next-schedule-card {
+  margin: 8px 24px 0;
+  padding: 24px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+.next-schedule-card__label {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-label);
+  line-height: 1.6;
+}
+
+.next-schedule-card__time {
+  margin: 14px 0 0;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.next-schedule-card__content {
+  margin: 12px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.next-schedule-card__departure {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.next-schedule-card__departure-label {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-label);
+  line-height: 1.6;
+}
+
+.next-schedule-card__departure-time {
+  margin: 8px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.mic-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 32px;
+  gap: 16px;
+}
+
+.mic-button {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-card);
+  flex-shrink: 0;
+}
+
+.mic-area__caption {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-label);
+  text-align: center;
+  line-height: 1.6;
+}
