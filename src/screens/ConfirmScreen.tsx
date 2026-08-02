@@ -7,7 +7,9 @@ export type ConfirmMode = 'register' | 'edit'
 interface ConfirmScreenProps {
   mode: ConfirmMode
   item: VoiceDraftSchedule
-  /** 「はい」/「へんこうする」タップ→完了表示(1.5秒)後に呼ばれる */
+  /** 「はい」/「へんこうする」タップで呼ばれる。Supabaseへの保存処理を行う。 */
+  onSubmit: () => Promise<void>
+  /** 保存成功→完了表示(1.5秒)後に呼ばれる */
   onComplete: () => void
   /** 「ちがう」/「やめる」タップで即座に呼ばれる */
   onCancel: () => void
@@ -17,16 +19,28 @@ const COMPLETE_DISPLAY_MS = 1500
 
 // 仕様書 9章: ③AI確認画面
 // 仕様書 10.4: ④予定一覧の「へんこう」からもこのレイアウトを再利用する（文言のみ差し替え）
-export function ConfirmScreen({ mode, item, onComplete, onCancel }: ConfirmScreenProps) {
-  const [showComplete, setShowComplete] = useState(false)
+export function ConfirmScreen({ mode, item, onSubmit, onComplete, onCancel }: ConfirmScreenProps) {
+  const [phase, setPhase] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
-    if (!showComplete) return
+    if (phase !== 'success') return
     const timer = window.setTimeout(() => {
       onComplete()
     }, COMPLETE_DISPLAY_MS)
     return () => window.clearTimeout(timer)
-  }, [showComplete, onComplete])
+  }, [phase, onComplete])
+
+  const handlePrimaryTap = async () => {
+    setPhase('submitting')
+    try {
+      await onSubmit()
+      setPhase('success')
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : String(error))
+      setPhase('error')
+    }
+  }
 
   const heading =
     mode === 'register' ? 'この よていを 登録しますか？' : 'よていを 変更しますか？'
@@ -44,24 +58,28 @@ export function ConfirmScreen({ mode, item, onComplete, onCancel }: ConfirmScree
         <p className="confirm-card__content">{item.content}</p>
       </section>
 
+      {phase === 'error' && <p className="confirm-screen__error">エラー: {errorMessage}</p>}
+
       <div className="confirm-screen__actions">
         <button
           type="button"
           className="confirm-button confirm-button--primary tap-feedback"
-          onClick={() => setShowComplete(true)}
+          onClick={handlePrimaryTap}
+          disabled={phase === 'submitting'}
         >
-          {primaryLabel}
+          {phase === 'submitting' ? '保存しています…' : primaryLabel}
         </button>
         <button
           type="button"
           className="confirm-button confirm-button--secondary tap-feedback"
           onClick={onCancel}
+          disabled={phase === 'submitting'}
         >
           {secondaryLabel}
         </button>
       </div>
 
-      {showComplete && (
+      {phase === 'success' && (
         <div className="confirm-overlay" role="status">
           <p className="confirm-overlay__text">{completeMessage}</p>
         </div>

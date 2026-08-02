@@ -1,18 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BottomNav } from '../components/BottomNav'
 import { TopBar } from '../components/TopBar'
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  ForkKnifeIcon,
-  HospitalIcon,
-  MicIcon,
-  PackageIcon,
-  PlusIcon,
-} from '../components/icons'
-import { CALENDAR_MONTH, CALENDAR_YEAR, EVENT_DAYS, TODAY_DAY, todaySchedules } from '../data/schedules'
-import type { ScheduleIcon } from '../data/schedules'
+import { ChevronLeftIcon, ChevronRightIcon, ClipboardIcon, MicIcon, PlusIcon } from '../components/icons'
+import type { Appointment } from '../lib/appointments'
+import { fetchAllAppointments } from '../lib/appointments'
 import { buildMonthGrid } from '../utils/calendar'
+import { isSameDay, toDateLabel, toTimeLabel } from '../utils/date'
 import './ScheduleListScreen.css'
 
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
@@ -20,34 +13,51 @@ const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土']
 interface ScheduleScreenProps {
   onStartRecording: () => void
   onNavigateTab: (tab: 'home' | 'schedule' | 'reservation') => void
-}
-
-function ScheduleIconBadge({ icon }: { icon: ScheduleIcon }) {
-  if (icon === 'hospital') {
-    return (
-      <span className="schedule-row__icon schedule-row__icon--blue">
-        <HospitalIcon size={20} />
-      </span>
-    )
-  }
-  if (icon === 'package') {
-    return (
-      <span className="schedule-row__icon schedule-row__icon--yellow">
-        <PackageIcon size={20} />
-      </span>
-    )
-  }
-  return (
-    <span className="schedule-row__icon schedule-row__icon--orange">
-      <ForkKnifeIcon size={18} />
-    </span>
-  )
+  onSelectAppointment: (appointment: Appointment) => void
 }
 
 // 参考画像②予定画面
-export function ScheduleScreen({ onStartRecording, onNavigateTab }: ScheduleScreenProps) {
+export function ScheduleScreen({ onStartRecording, onNavigateTab, onSelectAppointment }: ScheduleScreenProps) {
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
-  const weeks = buildMonthGrid(CALENDAR_YEAR, CALENDAR_MONTH)
+  const [items, setItems] = useState<Appointment[]>([])
+  const [status, setStatus] = useState<'loading' | 'error' | 'ready'>('loading')
+  const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    setStatus('loading')
+
+    fetchAllAppointments()
+      .then((list) => {
+        if (cancelled) return
+        setItems(list)
+        setStatus('ready')
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return
+        setErrorMessage(error instanceof Error ? error.message : String(error))
+        setStatus('error')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const today = new Date()
+  const weeks = buildMonthGrid(today.getFullYear(), today.getMonth() + 1)
+
+  const eventDays = new Set(
+    items
+      .filter((item) => {
+        const d = new Date(item.scheduled_at)
+        return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth()
+      })
+      .map((item) => new Date(item.scheduled_at).getDate()),
+  )
+
+  const visibleItems =
+    viewMode === 'calendar' ? items.filter((item) => isSameDay(new Date(item.scheduled_at), today)) : items
 
   return (
     <div className="schedule-screen">
@@ -91,7 +101,7 @@ export function ScheduleScreen({ onStartRecording, onNavigateTab }: ScheduleScre
                 <ChevronLeftIcon size={18} />
               </button>
               <p className="month-calendar__title">
-                {CALENDAR_YEAR}年{CALENDAR_MONTH}月
+                {today.getFullYear()}年{today.getMonth() + 1}月
               </p>
               <button type="button" className="month-calendar__nav tap-feedback" aria-label="次の月">
                 <ChevronRightIcon size={18} />
@@ -113,8 +123,8 @@ export function ScheduleScreen({ onStartRecording, onNavigateTab }: ScheduleScre
               {weeks.map((week, wi) => (
                 <div className="month-calendar__row" key={`week-${wi}`}>
                   {week.map((cell, ci) => {
-                    const isToday = cell.inMonth && cell.day === TODAY_DAY
-                    const hasEvent = cell.inMonth && EVENT_DAYS.includes(cell.day)
+                    const isToday = cell.inMonth && cell.day === today.getDate()
+                    const hasEvent = cell.inMonth && eventDays.has(cell.day)
                     return (
                       <div className="month-calendar__cell" key={`${wi}-${ci}`}>
                         <span
@@ -143,23 +153,45 @@ export function ScheduleScreen({ onStartRecording, onNavigateTab }: ScheduleScre
         )}
 
         <h2 className="schedule-screen__day-heading">
-          7月{TODAY_DAY}日（月） {viewMode === 'calendar' ? '今日' : 'の予定'}
+          {toDateLabel(today)} {viewMode === 'calendar' ? '今日' : 'の予定'}
         </h2>
 
-        <ul className="schedule-row-list">
-          {todaySchedules.map((item) => (
-            <li key={item.id} className="schedule-row tap-feedback">
-              <ScheduleIconBadge icon={item.icon} />
-              <span className="schedule-row__text">
-                <span className="schedule-row__title">
-                  {item.timeLabel}　{item.title}
-                </span>
-                <span className="schedule-row__subtitle">{item.subtitle}</span>
-              </span>
-              <ChevronRightIcon size={18} />
-            </li>
-          ))}
-        </ul>
+        {status === 'loading' && <p className="schedule-screen__status">読み込み中…</p>}
+        {status === 'error' && (
+          <p className="schedule-screen__status schedule-screen__status--error">取得に失敗しました（{errorMessage}）</p>
+        )}
+        {status === 'ready' && visibleItems.length === 0 && (
+          <p className="schedule-screen__status">よていは ありません</p>
+        )}
+
+        {status === 'ready' && visibleItems.length > 0 && (
+          <ul className="schedule-row-list">
+            {visibleItems.map((item) => {
+              const d = new Date(item.scheduled_at)
+              const subtitle = item.departure_note || item.location || ''
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    className="schedule-row schedule-row--button tap-feedback"
+                    onClick={() => onSelectAppointment(item)}
+                  >
+                    <span className="schedule-row__icon schedule-row__icon--blue">
+                      <ClipboardIcon size={20} />
+                    </span>
+                    <span className="schedule-row__text">
+                      <span className="schedule-row__title">
+                        {viewMode === 'list' ? `${toDateLabel(d)}　${toTimeLabel(d)}` : toTimeLabel(d)}　{item.title}
+                      </span>
+                      {subtitle && <span className="schedule-row__subtitle">{subtitle}</span>}
+                    </span>
+                    <ChevronRightIcon size={18} />
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
 
         <button type="button" className="schedule-screen__add-button tap-feedback" onClick={onStartRecording}>
           <MicIcon size={20} />

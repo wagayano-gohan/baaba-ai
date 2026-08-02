@@ -51,6 +51,17 @@
   line-height: 1.6;
 }
 
+.confirm-screen__error {
+  margin: 16px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+.confirm-button:disabled {
+  opacity: 0.7;
+}
+
 .confirm-screen__actions {
   margin-top: auto;
   padding-top: 32px;

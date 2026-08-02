@@ -195,6 +195,23 @@
   padding: 12px 14px;
 }
 
+.schedule-row--button {
+  width: 100%;
+  text-align: left;
+}
+
+.schedule-screen__status {
+  margin: 0;
+  padding: 12px 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-label);
+}
+
+.schedule-screen__status--error {
+  color: var(--color-danger);
+}
+
 .schedule-row__icon {
   width: 40px;
   height: 40px;

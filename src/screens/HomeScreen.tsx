@@ -1,8 +1,8 @@
+import { useEffect, useState } from 'react'
 import { BottomNav } from '../components/BottomNav'
 import { TopBar } from '../components/TopBar'
 import {
   BellIcon,
-  BusIcon,
   ChevronRightIcon,
   ClipboardIcon,
   HospitalIcon,
@@ -10,10 +10,12 @@ import {
   MicIcon,
   MoonIcon,
   SunIcon,
-  TaxiIcon,
   WalkIcon,
 } from '../components/icons'
-import { nextSchedule, todayCondition, userName, weather } from '../data/schedules'
+import type { Appointment } from '../lib/appointments'
+import { fetchUpcomingAppointments } from '../lib/appointments'
+import { todayCondition, userName, weather } from '../data/schedules'
+import { toDateLabel, toTimeLabel } from '../utils/date'
 import './HomeScreen.css'
 
 interface HomeScreenProps {
@@ -21,8 +23,35 @@ interface HomeScreenProps {
   onNavigateTab: (tab: 'home' | 'schedule' | 'reservation') => void
 }
 
+type NextScheduleState =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'empty' }
+  | { status: 'ready'; appointment: Appointment }
+
 // 参考画像①ホーム画面
 export function HomeScreen({ onStartRecording, onNavigateTab }: HomeScreenProps) {
+  const [state, setState] = useState<NextScheduleState>({ status: 'loading' })
+
+  useEffect(() => {
+    let cancelled = false
+    setState({ status: 'loading' })
+
+    fetchUpcomingAppointments(new Date().toISOString())
+      .then((list) => {
+        if (cancelled) return
+        setState(list.length > 0 ? { status: 'ready', appointment: list[0] } : { status: 'empty' })
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return
+        setState({ status: 'error', message: error instanceof Error ? error.message : String(error) })
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   return (
     <div className="home-screen">
       <TopBar right={<BellIcon size={22} />} />
@@ -48,38 +77,45 @@ export function HomeScreen({ onStartRecording, onNavigateTab }: HomeScreenProps)
             次の予定
           </div>
 
-          <div className="next-schedule-card__body">
-            <div className="next-schedule-card__icon">
-              <HospitalIcon size={30} />
-            </div>
-            <div className="next-schedule-card__main">
-              <p className="next-schedule-card__time">{nextSchedule.timeLabel}</p>
-              <p className="next-schedule-card__title">{nextSchedule.title}</p>
-              <p className="next-schedule-card__departure">{nextSchedule.departureLabel}</p>
-            </div>
-          </div>
+          {state.status === 'loading' && (
+            <p className="next-schedule-card__status">読み込み中…</p>
+          )}
 
-          <div className="next-schedule-card__transport">
-            <span className="next-schedule-card__transport-item">
-              <BusIcon size={18} />
-              {nextSchedule.transport.bus}
-            </span>
-            <span className="next-schedule-card__transport-item">
-              <TaxiIcon size={18} />
-              {nextSchedule.transport.taxi}
-            </span>
-          </div>
+          {state.status === 'error' && (
+            <p className="next-schedule-card__status next-schedule-card__status--error">
+              取得に失敗しました（{state.message}）
+            </p>
+          )}
 
-          <div className="next-schedule-card__actions">
-            <button type="button" className="next-schedule-card__button tap-feedback">
-              <LocationPinIcon size={18} />
-              行き方を見る
-            </button>
-            <button type="button" className="next-schedule-card__button tap-feedback">
-              <ClipboardIcon size={18} />
-              予定の詳細
-            </button>
-          </div>
+          {state.status === 'empty' && <p className="next-schedule-card__status">次の予定はありません</p>}
+
+          {state.status === 'ready' && (
+            <>
+              <div className="next-schedule-card__body">
+                <div className="next-schedule-card__icon">
+                  <HospitalIcon size={30} />
+                </div>
+                <div className="next-schedule-card__main">
+                  <p className="next-schedule-card__time">{toTimeLabel(new Date(state.appointment.scheduled_at))}</p>
+                  <p className="next-schedule-card__title">{state.appointment.title}</p>
+                  <p className="next-schedule-card__departure">
+                    {state.appointment.departure_note ?? toDateLabel(new Date(state.appointment.scheduled_at))}
+                  </p>
+                </div>
+              </div>
+
+              <div className="next-schedule-card__actions">
+                <button type="button" className="next-schedule-card__button tap-feedback">
+                  <LocationPinIcon size={18} />
+                  行き方を見る
+                </button>
+                <button type="button" className="next-schedule-card__button tap-feedback">
+                  <ClipboardIcon size={18} />
+                  予定の詳細
+                </button>
+              </div>
+            </>
+          )}
         </section>
 
         <button type="button" className="voice-card tap-feedback" onClick={onStartRecording}>

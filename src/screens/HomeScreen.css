@@ -71,6 +71,18 @@
   flex-shrink: 0;
 }
 
+.next-schedule-card__status {
+  margin: 0;
+  padding: 16px 18px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-label);
+}
+
+.next-schedule-card__status--error {
+  color: var(--color-danger);
+}
+
 .next-schedule-card__body {
   display: flex;
   gap: 14px;
