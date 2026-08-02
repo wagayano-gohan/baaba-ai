@@ -2,11 +2,9 @@ import { useCallback, useState } from 'react'
 import { HomeScreen } from './screens/HomeScreen'
 import { RecordingScreen } from './screens/RecordingScreen'
 import { ConfirmScreen } from './screens/ConfirmScreen'
-import type { ConfirmMode } from './screens/ConfirmScreen'
 import { ScheduleScreen } from './screens/ScheduleListScreen'
 import { ScheduleDetailScreen } from './screens/ScheduleDetailScreen'
 import { ReservationScreen } from './screens/ReservationScreen'
-import { voiceDraftSchedule } from './data/schedules'
 import type { VoiceDraftSchedule } from './data/schedules'
 import type { Appointment } from './lib/appointments'
 import { createAppointment, updateAppointment } from './lib/appointments'
@@ -14,25 +12,33 @@ import { parseDraftToScheduledAtISO, toDateLabel, toTimeLabel } from './utils/da
 
 type MainTab = 'home' | 'schedule' | 'reservation'
 
-type Screen = { name: MainTab } | { name: 'recording' } | { name: 'confirm' } | { name: 'detail'; appointment: Appointment }
+type Screen =
+  | { name: MainTab }
+  | { name: 'recording' }
+  | { name: 'confirm'; mode: 'register'; draft: VoiceDraftSchedule }
+  | { name: 'confirm'; mode: 'edit'; appointment: Appointment }
+  | { name: 'detail'; appointment: Appointment }
 
 function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'home' })
   // 戻り先（録音→確認 完了後にどのタブへ戻るか）
   const [returnTab, setReturnTab] = useState<MainTab>('home')
-  const [confirmMode, setConfirmMode] = useState<ConfirmMode>('register')
-  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
 
   const goTab = useCallback((tab: MainTab) => setScreen({ name: tab }), [])
 
   const startRecording = useCallback((from: MainTab) => {
     setReturnTab(from)
-    setConfirmMode('register')
-    setEditingAppointment(null)
     setScreen({ name: 'recording' })
   }, [])
 
-  const stopRecording = useCallback(() => setScreen({ name: 'confirm' }), [])
+  // 音声認識・意図抽出に成功したら、抽出済みの下書きを持ってAI確認画面へ進む。
+  const handleRecognized = useCallback((draft: VoiceDraftSchedule) => {
+    setScreen({ name: 'confirm', mode: 'register', draft })
+  }, [])
+
+  // マイク不可・認識失敗・意図不明のときは、録音を開始した画面へ戻る。
+  const cancelRecording = useCallback(() => setScreen({ name: returnTab }), [returnTab])
+
   const finishConfirm = useCallback(() => setScreen({ name: returnTab }), [returnTab])
 
   const openDetail = useCallback((appointment: Appointment) => {
@@ -42,37 +48,25 @@ function App() {
 
   const startEdit = useCallback((appointment: Appointment) => {
     setReturnTab('schedule')
-    setEditingAppointment(appointment)
-    setConfirmMode('edit')
-    setScreen({ name: 'confirm' })
+    setScreen({ name: 'confirm', mode: 'edit', appointment })
   }, [])
 
   const handleDeleted = useCallback(() => setScreen({ name: 'schedule' }), [])
 
-  // ③AI確認画面に渡す表示用データ。編集時は選択中の予定から、新規登録時は
-  // 音声登録フロー（今回のスコープ外）のダミー下書きから組み立てる。
-  const confirmItem: VoiceDraftSchedule =
-    confirmMode === 'edit' && editingAppointment
-      ? {
-          dateLabel: toDateLabel(new Date(editingAppointment.scheduled_at)),
-          timeLabel: toTimeLabel(new Date(editingAppointment.scheduled_at)),
-          content: editingAppointment.title,
-        }
-      : voiceDraftSchedule
-
   const handleConfirmSubmit = useCallback(async () => {
-    if (confirmMode === 'edit' && editingAppointment) {
-      await updateAppointment(editingAppointment.id, {
-        title: editingAppointment.title,
-        scheduled_at: editingAppointment.scheduled_at,
+    if (screen.name !== 'confirm') return
+    if (screen.mode === 'edit') {
+      await updateAppointment(screen.appointment.id, {
+        title: screen.appointment.title,
+        scheduled_at: screen.appointment.scheduled_at,
       })
     } else {
       await createAppointment({
-        title: voiceDraftSchedule.content,
-        scheduled_at: parseDraftToScheduledAtISO(voiceDraftSchedule.dateLabel, voiceDraftSchedule.timeLabel),
+        title: screen.draft.content,
+        scheduled_at: parseDraftToScheduledAtISO(screen.draft.dateLabel, screen.draft.timeLabel),
       })
     }
-  }, [confirmMode, editingAppointment])
+  }, [screen])
 
   return (
     <div className="app-shell">
@@ -90,12 +84,22 @@ function App() {
 
       {screen.name === 'reservation' && <ReservationScreen onNavigateTab={goTab} />}
 
-      {screen.name === 'recording' && <RecordingScreen onStopRecording={stopRecording} />}
+      {screen.name === 'recording' && (
+        <RecordingScreen onRecognized={handleRecognized} onCancel={cancelRecording} />
+      )}
 
       {screen.name === 'confirm' && (
         <ConfirmScreen
-          mode={confirmMode}
-          item={confirmItem}
+          mode={screen.mode}
+          item={
+            screen.mode === 'edit'
+              ? {
+                  dateLabel: toDateLabel(new Date(screen.appointment.scheduled_at)),
+                  timeLabel: toTimeLabel(new Date(screen.appointment.scheduled_at)),
+                  content: screen.appointment.title,
+                }
+              : screen.draft
+          }
           onSubmit={handleConfirmSubmit}
           onComplete={finishConfirm}
           onCancel={finishConfirm}

@@ -37,3 +37,32 @@ export function parseDraftToScheduledAtISO(dateLabel: string, timeLabel: string)
   }
   return candidate.toISOString()
 }
+
+/**
+ * 音声認識→意図抽出APIが返す date("YYYY-MM-DD" | null) と time("HH:MM" | null) から
+ * 表示用のDateを組み立てる。値が読み取れなかった場合は妥当なデフォルト（明日の10:00等）で補う。
+ */
+export function buildDateFromExtractedParts(dateStr: string | null | undefined, timeStr: string | null | undefined): Date {
+  const now = new Date()
+
+  let year = now.getFullYear()
+  let month = now.getMonth()
+  let day = now.getDate() + 1 // 日付が読み取れない場合は明日を既定にする
+
+  const dateMatch = dateStr?.match(/(\d{4})-(\d{1,2})-(\d{1,2})/)
+  if (dateMatch) {
+    year = Number(dateMatch[1])
+    month = Number(dateMatch[2]) - 1
+    day = Number(dateMatch[3])
+  }
+
+  let hours = 10
+  let minutes = 0
+  const timeMatch = timeStr?.match(/(\d{1,2}):(\d{2})/)
+  if (timeMatch) {
+    hours = Number(timeMatch[1])
+    minutes = Number(timeMatch[2])
+  }
+
+  return new Date(year, month, day, hours, minutes, 0, 0)
+}
