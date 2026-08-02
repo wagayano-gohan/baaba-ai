@@ -30,6 +30,27 @@ function ensureConfigured(): void {
 
 const TABLE = 'appointments'
 
+/**
+ * SupabaseのPostgrestErrorは throwOnError() を使わない限り
+ * Error のインスタンスではないプレーンオブジェクトとして返ってくる。
+ * そのまま throw すると呼び出し側の `error instanceof Error` 判定が false になり、
+ * `String(error)` が "[object Object]" になってしまうため、ここで必ず Error 化する。
+ */
+function toAppointmentsError(error: unknown): Error {
+  if (error instanceof Error) return error
+
+  if (error && typeof error === 'object') {
+    const e = error as { message?: string; code?: string; details?: string; hint?: string }
+    const parts = [e.message || 'Supabaseエラー']
+    if (e.code) parts.push(`code: ${e.code}`)
+    if (e.details) parts.push(`details: ${e.details}`)
+    if (e.hint) parts.push(`hint: ${e.hint}`)
+    return new Error(parts.join(' / '))
+  }
+
+  return new Error(String(error))
+}
+
 /** 指定日時以降（論理削除されていない）の予定を、日時の早い順に取得する。 */
 export async function fetchUpcomingAppointments(fromISO: string): Promise<Appointment[]> {
   ensureConfigured()
@@ -40,7 +61,7 @@ export async function fetchUpcomingAppointments(fromISO: string): Promise<Appoin
     .gte('scheduled_at', fromISO)
     .order('scheduled_at', { ascending: true })
 
-  if (error) throw error
+  if (error) throw toAppointmentsError(error)
   return data ?? []
 }
 
@@ -53,21 +74,21 @@ export async function fetchAllAppointments(): Promise<Appointment[]> {
     .is('deleted_at', null)
     .order('scheduled_at', { ascending: true })
 
-  if (error) throw error
+  if (error) throw toAppointmentsError(error)
   return data ?? []
 }
 
 export async function createAppointment(input: NewAppointmentInput): Promise<Appointment> {
   ensureConfigured()
   const { data, error } = await supabase.from(TABLE).insert(input).select().single()
-  if (error) throw error
+  if (error) throw toAppointmentsError(error)
   return data
 }
 
 export async function updateAppointment(id: string, input: UpdateAppointmentInput): Promise<Appointment> {
   ensureConfigured()
   const { data, error } = await supabase.from(TABLE).update(input).eq('id', id).select().single()
-  if (error) throw error
+  if (error) throw toAppointmentsError(error)
   return data
 }
 
@@ -78,5 +99,5 @@ export async function softDeleteAppointment(id: string): Promise<void> {
     .from(TABLE)
     .update({ deleted_at: new Date().toISOString(), status: 'deleted' })
     .eq('id', id)
-  if (error) throw error
+  if (error) throw toAppointmentsError(error)
 }
