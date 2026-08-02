@@ -67,12 +67,6 @@ export const nextSchedule = {
   },
 }
 
-// 今日の様子（ホーム画面下部）
-export const todayCondition = {
-  steps: '3,240',
-  sleep: '7時間10分',
-}
-
 // 天気（ホーム画面）
 export const weather = {
   dateLabel: '7月27日（月）',

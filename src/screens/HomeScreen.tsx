@@ -3,18 +3,15 @@ import { BottomNav } from '../components/BottomNav'
 import { TopBar } from '../components/TopBar'
 import {
   BellIcon,
-  ChevronRightIcon,
   ClipboardIcon,
   HospitalIcon,
   LocationPinIcon,
   MicIcon,
-  MoonIcon,
   SunIcon,
-  WalkIcon,
 } from '../components/icons'
 import type { Appointment } from '../lib/appointments'
 import { fetchUpcomingAppointments } from '../lib/appointments'
-import { todayCondition, userName, weather } from '../data/schedules'
+import { userName, weather } from '../data/schedules'
 import { toDateLabel, toTimeLabel } from '../utils/date'
 import './HomeScreen.css'
 
@@ -127,32 +124,6 @@ export function HomeScreen({ onStartRecording, onNavigateTab }: HomeScreenProps)
             <span className="voice-card__subtitle">話してください</span>
           </span>
         </button>
-
-        <section className="condition-card" aria-label="今日の様子">
-          <p className="condition-card__heading">今日の様子</p>
-          <div className="condition-card__row">
-            <div className="condition-card__item">
-              <span className="condition-card__icon condition-card__icon--walk">
-                <WalkIcon size={20} />
-              </span>
-              <span className="condition-card__text">
-                <span className="condition-card__label">歩数</span>
-                <span className="condition-card__value">{todayCondition.steps}歩</span>
-              </span>
-            </div>
-            <div className="condition-card__divider" />
-            <div className="condition-card__item">
-              <span className="condition-card__icon condition-card__icon--sleep">
-                <MoonIcon size={18} />
-              </span>
-              <span className="condition-card__text">
-                <span className="condition-card__label">睡眠</span>
-                <span className="condition-card__value">{todayCondition.sleep}</span>
-              </span>
-            </div>
-            <ChevronRightIcon size={18} />
-          </div>
-        </section>
       </div>
 
       <BottomNav active="home" onNavigateTab={onNavigateTab} />
