@@ -3,6 +3,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  background: var(--color-page);
 }
 
 .home-screen__scroll {
@@ -11,110 +12,258 @@
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-}
-
-.home-screen__header {
-  padding: 24px;
-  padding-top: max(24px, env(safe-area-inset-top));
-}
-
-.home-screen__date {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.6;
-}
-
-.home-screen__greeting {
-  margin: 8px 0 0;
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.6;
-}
-
-.next-schedule-card {
-  margin: 8px 24px 0;
-  padding: 24px;
-  background: var(--color-card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-card);
-}
-
-.next-schedule-card__label {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--color-label);
-  line-height: 1.6;
-}
-
-.next-schedule-card__time {
-  margin: 14px 0 0;
-  font-size: 40px;
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.6;
-}
-
-.next-schedule-card__content {
-  margin: 12px 0 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.6;
-}
-
-.next-schedule-card__departure {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border);
-}
-
-.next-schedule-card__departure-label {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--color-label);
-  line-height: 1.6;
-}
-
-.next-schedule-card__departure-time {
-  margin: 8px 0 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.6;
-}
-
-.mic-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 32px;
+  padding: 0 16px 20px;
   gap: 16px;
 }
 
-.mic-button {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background: var(--color-accent);
+.home-screen__greeting-block {
+  padding-top: 4px;
+}
+
+.home-screen__greeting {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.4;
+}
+
+.home-screen__weather {
+  margin: 8px 0 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-card);
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-label);
+  color-adjust: exact;
+}
+
+.home-screen__weather svg {
+  color: #e0a63a;
   flex-shrink: 0;
 }
 
-.mic-area__caption {
+/* 次の予定カード */
+.next-schedule-card {
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.next-schedule-card__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  background: var(--color-alert-tint);
+  color: var(--color-alert);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.next-schedule-card__label-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-alert);
+  flex-shrink: 0;
+}
+
+.next-schedule-card__body {
+  display: flex;
+  gap: 14px;
+  padding: 16px 18px 0;
+}
+
+.next-schedule-card__icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: var(--tint-blue-bg);
+  color: var(--tint-blue-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.next-schedule-card__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.next-schedule-card__time {
   margin: 0;
   font-size: 24px;
   font-weight: 700;
+  color: var(--color-alert);
+  line-height: 1.25;
+}
+
+.next-schedule-card__title {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.next-schedule-card__departure {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-alert);
+}
+
+.next-schedule-card__transport {
+  display: flex;
+  gap: 20px;
+  padding: 14px 18px 0;
+  margin-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.next-schedule-card__transport-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
   color: var(--color-label);
-  text-align: center;
-  line-height: 1.6;
+}
+
+.next-schedule-card__actions {
+  display: flex;
+  gap: 10px;
+  padding: 14px 18px 18px;
+}
+
+.next-schedule-card__button {
+  flex: 1;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--color-accent);
+  color: var(--color-accent);
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* 音声操作カード */
+.voice-card {
+  min-height: 68px;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-dark));
+  box-shadow: var(--shadow-float);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  width: 100%;
+}
+
+.voice-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.voice-card__text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.voice-card__title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.voice-card__subtitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* 今日の様子 */
+.condition-card {
+  background: var(--tint-green-bg);
+  border-radius: var(--radius);
+  padding: 14px 18px 16px;
+}
+
+.condition-card__heading {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #2f7a45;
+}
+
+.condition-card__row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.condition-card__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.condition-card__icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ffffff;
+}
+
+.condition-card__icon--walk {
+  background: var(--tint-green-fg);
+}
+
+.condition-card__icon--sleep {
+  background: #6b6fce;
+}
+
+.condition-card__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.condition-card__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-label);
+}
+
+.condition-card__value {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.condition-card__row > svg {
+  color: var(--color-sublabel);
+  flex-shrink: 0;
 }

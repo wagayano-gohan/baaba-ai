@@ -1,154 +1,262 @@
-.schedule-list-screen {
+.schedule-screen {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
   position: relative;
+  background: var(--color-page);
 }
 
-.schedule-list-screen__scroll {
+.schedule-screen__scroll {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 24px;
+  padding: 4px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.schedule-list-screen__heading {
-  margin: 0 0 24px;
-  font-size: 28px;
+.schedule-screen__add-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 切替タブ */
+.view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border-radius: var(--radius-pill);
+  padding: 4px;
+  box-shadow: var(--shadow-card);
+}
+
+.view-tabs__item {
+  flex: 1;
+  min-height: 38px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-label);
+}
+
+.view-tabs__item--muted {
+  flex: 0.7;
+  color: var(--color-sublabel);
+}
+
+.view-tabs__item.is-active {
+  background: var(--color-accent);
+  color: #ffffff;
+}
+
+/* 月表示カレンダー */
+.month-calendar {
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 14px 12px 8px;
+}
+
+.month-calendar__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 10px;
+}
+
+.month-calendar__nav {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-label);
+}
+
+.month-calendar__title {
+  margin: 0;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-text);
-  line-height: 1.6;
 }
 
-.schedule-list-screen__empty {
-  font-size: 28px;
+.month-calendar__weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.month-calendar__weekday {
+  text-align: center;
+  font-size: 12.5px;
   font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.6;
+  color: var(--color-label);
 }
 
-.schedule-list {
+.month-calendar__weekday.is-sun {
+  color: var(--color-alert);
+}
+
+.month-calendar__weekday.is-sat {
+  color: #3f7fc0;
+}
+
+.month-calendar__row {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+
+.month-calendar__cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 0 4px;
+  gap: 3px;
+}
+
+.month-calendar__day {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.month-calendar__day.is-muted {
+  color: #cfcfd4;
+  font-weight: 500;
+}
+
+.month-calendar__day.is-sun {
+  color: var(--color-alert);
+}
+
+.month-calendar__day.is-sat {
+  color: #3f7fc0;
+}
+
+.month-calendar__day.is-today {
+  background: var(--color-accent);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.month-calendar__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-alert);
+}
+
+.month-calendar__dot.is-today {
+  background: var(--color-accent);
+}
+
+/* 当日の予定見出し */
+.schedule-screen__day-heading {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-accent-dark);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.schedule-row-list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 10px;
 }
 
-.schedule-card {
+.schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   background: var(--color-card);
   border-radius: var(--radius);
   box-shadow: var(--shadow-card);
-  padding: 24px;
+  padding: 12px 14px;
 }
 
-.schedule-card__date {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-label);
-  line-height: 1.6;
-}
-
-.schedule-card__time {
-  margin: 12px 0 0;
-  font-size: 40px;
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.6;
-}
-
-.schedule-card__content {
-  margin: 12px 0 0;
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1.6;
-}
-
-.schedule-card__actions {
-  margin-top: 20px;
-  display: flex;
-  gap: 16px;
-}
-
-.schedule-card__button {
-  flex: 1 1 48%;
-  min-height: 88px;
-  border-radius: var(--radius);
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1.6;
-}
-
-.schedule-card__button--edit {
-  background: transparent;
-  color: var(--color-accent);
-  border: 2px solid var(--color-accent);
-}
-
-.schedule-card__button--delete {
-  background: var(--color-danger);
-  color: #ffffff;
-}
-
-.delete-dialog-overlay {
-  /* ドキュメント全体（縦に長いカードリスト）ではなく、常にビューポート（.app-shell）
-     基準で中央配置するため fixed を使用する。position: absolute だとカード一覧の
-     スクロール量によってはビューポート外に配置され、確認ボタンに到達できなくなる。 */
-  position: fixed;
-  inset: 0;
-  background: rgba(44, 44, 46, 0.4);
+.schedule-row__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  z-index: 20;
+  flex-shrink: 0;
 }
 
-.delete-dialog {
-  width: 100%;
-  background: var(--color-card);
-  border-radius: var(--radius);
-  padding: 32px 24px;
-  box-shadow: var(--shadow-card);
+.schedule-row__icon--blue {
+  background: var(--tint-blue-bg);
+  color: var(--tint-blue-fg);
+}
+
+.schedule-row__icon--yellow {
+  background: var(--tint-yellow-bg);
+  color: var(--tint-yellow-fg);
+}
+
+.schedule-row__icon--orange {
+  background: var(--tint-orange-bg);
+  color: var(--tint-orange-fg);
+}
+
+.schedule-row__text {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 2px;
 }
 
-.delete-dialog__heading {
-  margin: 0;
-  font-size: 28px;
+.schedule-row__title {
+  font-size: 15.5px;
   font-weight: 700;
   color: var(--color-text);
-  text-align: center;
-  line-height: 1.6;
 }
 
-.delete-dialog__actions {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.schedule-row__subtitle {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-label);
 }
 
-.delete-dialog__button {
-  width: 100%;
-  min-height: 88px;
-  border-radius: var(--radius);
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.6;
+.schedule-row > svg {
+  color: var(--color-sublabel);
+  flex-shrink: 0;
 }
 
-.delete-dialog__button--confirm {
-  background: var(--color-danger);
+/* 予定追加ボタン */
+.schedule-screen__add-button {
+  margin-top: 4px;
+  min-height: 52px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
   color: #ffffff;
-}
-
-.delete-dialog__button--cancel {
-  background: var(--color-neutral-bg);
-  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: var(--shadow-float);
 }

@@ -1,30 +1,99 @@
-// 仕様書 11章「ダミーデータ一覧」をそのまま使用する固定データ。
-// 実際のデータ保存・通信は行わない（画面内の一時的な状態のみ）。
+// 参考画像（予定画面）に準拠したダミーデータ。実際のデータ保存・通信は行わない。
+
+export type ScheduleIcon = 'hospital' | 'package' | 'food' | 'beauty'
 
 export interface ScheduleItem {
   id: number
-  /** 例: 「7月29日（水）」 */
+  /** カレンダー上の日（例: 27） */
+  day: number
+  /** 例: 「7月27日（月）」 */
   dateLabel: string
-  /** 例: 「10時30分」 */
+  /** 例: 「10:30」 */
   timeLabel: string
-  /** 例: 「病院（内科）」 */
-  content: string
+  /** 例: 「〇〇病院」 */
+  title: string
+  /** 例: 「9:50に出発」「受け取り予定」 */
+  subtitle: string
+  icon: ScheduleIcon
 }
 
-// No.1〜No.5（日付の早い順）
-export const initialSchedules: ScheduleItem[] = [
-  { id: 1, dateLabel: '7月29日（水）', timeLabel: '10時30分', content: '病院（内科）' },
-  { id: 2, dateLabel: '7月31日（金）', timeLabel: '14時00分', content: 'デイサービス' },
-  { id: 3, dateLabel: '8月2日（日）', timeLabel: '9時00分', content: '娘の家族が来る' },
-  { id: 4, dateLabel: '8月5日（水）', timeLabel: '13時30分', content: '美容院' },
-  { id: 5, dateLabel: '8月8日（土）', timeLabel: '11時00分', content: '公民館の体操教室' },
+// 2026年7月のダミー月（参考画像と同じ月・同じ「今日」を採用する）
+export const CALENDAR_YEAR = 2026
+export const CALENDAR_MONTH = 7 // 1-12
+export const TODAY_DAY = 27
+
+// 予定がある日（カレンダーのドット表示用）
+export const EVENT_DAYS = [23, 24, 27, 31]
+
+// 7月27日（今日）の予定一覧
+export const todaySchedules: ScheduleItem[] = [
+  {
+    id: 1,
+    day: 27,
+    dateLabel: '7月27日（月）',
+    timeLabel: '10:30',
+    title: '〇〇病院',
+    subtitle: '9:50に出発',
+    icon: 'hospital',
+  },
+  {
+    id: 2,
+    day: 27,
+    dateLabel: '7月27日（月）',
+    timeLabel: '15:00',
+    title: 'Amazonの荷物',
+    subtitle: '受け取り予定',
+    icon: 'package',
+  },
+  {
+    id: 3,
+    day: 27,
+    dateLabel: '7月27日（月）',
+    timeLabel: '18:00',
+    title: '立川で夕食',
+    subtitle: 'レストラン予約済み',
+    icon: 'food',
+  },
 ]
 
-// ①ホーム画面「つぎの よてい」に表示する、出発時刻の案内（No.1にのみ紐づくダミー文言）
-export const nextScheduleDeparture = '10時00分に 出発'
+// 次の予定（ホーム画面「次の予定」カード用）
+export const nextSchedule = {
+  timeLabel: '10:30',
+  title: '〇〇病院',
+  departureLabel: '9:50に出発してください',
+  transport: {
+    bus: 'バスで約25分',
+    taxi: 'タクシーで約18分',
+  },
+}
 
-// ③AI確認画面（新規登録）に表示するダミーデータ = No.1と同内容
-export const recordedDummySchedule: ScheduleItem = initialSchedules[0]
+// 今日の様子（ホーム画面下部）
+export const todayCondition = {
+  steps: '3,240',
+  sleep: '7時間10分',
+}
+
+// 天気（ホーム画面）
+export const weather = {
+  dateLabel: '7月27日（月）',
+  summary: '晴れ',
+  high: 33,
+  low: 26,
+}
 
 // 祖母の呼び名（ダミー）
 export const userName = '花子さん'
+
+// ②③ 音声登録フロー（録音中→AI確認画面）専用のダミーデータ。
+// カレンダー／一覧の ScheduleItem とは形が異なるため独立させている。
+export interface VoiceDraftSchedule {
+  dateLabel: string
+  timeLabel: string
+  content: string
+}
+
+export const voiceDraftSchedule: VoiceDraftSchedule = {
+  dateLabel: '7月29日（水）',
+  timeLabel: '10:30',
+  content: '病院（内科）',
+}

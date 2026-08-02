@@ -1,26 +1,55 @@
 /* ばーばAI UIプロトタイプ 共通スタイル
-   数値・配色は docs/ui-prototype-spec.md の 3章・4章に厳密に従う */
+   参考画像（ホーム／予定／予約 3画面）の配色・余白基準に準拠する */
 
 :root {
-  --color-bg: #faf8f5;
+  --color-bg: #ffffff;
+  --color-page: #faf9fb;
   --color-card: #ffffff;
-  --color-text: #2c2c2e;
-  --color-label: #595959;
-  --color-accent: #2d5a78;
-  --color-yes: #2e5a44;
-  --color-neutral-bg: #eceae5;
-  --color-danger: #823c2d;
-  --color-tab-inactive: #6c6c6c;
-  --color-border: #e3e1dc;
-  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --color-text: #1c1c1e;
+  --color-label: #6b6b70;
+  --color-sublabel: #9a9aa0;
 
-  --radius: 20px;
+  --color-accent: #5b4fdb;
+  --color-accent-dark: #4a3fc4;
+  --color-accent-tint: #efecfc;
+
+  --color-alert: #e0453f;
+  --color-alert-tint: #fbe9ea;
+
+  --color-yes: #2e5a44;
+  --color-neutral-bg: #f0eff4;
+  --color-danger: #e0453f;
+  --color-success: #2f9e56;
+  --color-success-tint: #e7f6ec;
+
+  --color-tab-inactive: #8a8a8f;
+  --color-border: #ececef;
+
+  --tint-blue-bg: #e5f0fb;
+  --tint-blue-fg: #3f7fc0;
+  --tint-yellow-bg: #fdf3d8;
+  --tint-yellow-fg: #c99a2e;
+  --tint-orange-bg: #fbe8dc;
+  --tint-orange-fg: #d9803f;
+  --tint-pink-bg: #fbe4ea;
+  --tint-pink-fg: #d85a80;
+  --tint-green-bg: #e7f5ea;
+  --tint-green-fg: #3fa65a;
+  --tint-cream-bg: #fdf6ec;
+
+  --shadow-card: 0 2px 12px rgba(28, 28, 30, 0.06);
+  --shadow-float: 0 8px 24px rgba(91, 79, 219, 0.22);
+
+  --radius: 18px;
+  --radius-sm: 12px;
+  --radius-pill: 999px;
 
   color-scheme: light;
 }
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html,
@@ -35,7 +64,7 @@ body {
   font-family:
     -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo',
     system-ui, sans-serif;
-  font-weight: 700; /* Light/Thinは全画面禁止のため太字を基本とする */
+  font-weight: 400;
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
 }
@@ -49,9 +78,10 @@ body {
 
 button {
   font-family: inherit;
-  font-weight: 700;
   border: none;
   cursor: pointer;
+  background: none;
+  color: inherit;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -60,7 +90,7 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-/* 押した瞬間に色が変化し、押されたことが視覚的にわかること（デザイン原則5） */
+/* 押した瞬間に色が変化し、押されたことが視覚的にわかること */
 button.tap-feedback {
   transition:
     transform 0.08s ease,
@@ -68,8 +98,8 @@ button.tap-feedback {
     opacity 0.08s ease;
 }
 button.tap-feedback:active {
-  filter: brightness(0.85);
-  transform: scale(0.97);
+  filter: brightness(0.92);
+  transform: scale(0.98);
 }
 
 /* スマートフォン専用のプロトタイプであることが分かるよう、

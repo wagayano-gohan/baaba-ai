@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
-import type { ScheduleItem } from '../data/schedules'
+import type { VoiceDraftSchedule } from '../data/schedules'
 import './ConfirmScreen.css'
 
 export type ConfirmMode = 'register' | 'edit'
 
 interface ConfirmScreenProps {
   mode: ConfirmMode
-  item: ScheduleItem
+  item: VoiceDraftSchedule
   /** 「はい」/「へんこうする」タップ→完了表示(1.5秒)後に呼ばれる */
   onComplete: () => void
   /** 「ちがう」/「やめる」タップで即座に呼ばれる */

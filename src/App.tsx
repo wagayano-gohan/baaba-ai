@@ -2,61 +2,47 @@ import { useCallback, useState } from 'react'
 import { HomeScreen } from './screens/HomeScreen'
 import { RecordingScreen } from './screens/RecordingScreen'
 import { ConfirmScreen } from './screens/ConfirmScreen'
-import { ScheduleListScreen } from './screens/ScheduleListScreen'
-import { initialSchedules, recordedDummySchedule, type ScheduleItem } from './data/schedules'
+import { ScheduleScreen } from './screens/ScheduleListScreen'
+import { ReservationScreen } from './screens/ReservationScreen'
+import { voiceDraftSchedule } from './data/schedules'
 
-// 仕様書 5章「画面遷移図」に対応する状態
-type Screen =
-  | { name: 'home' }
-  | { name: 'recording' }
-  | { name: 'confirm'; mode: 'register' }
-  | { name: 'confirm'; mode: 'edit'; item: ScheduleItem }
-  | { name: 'list' }
+type MainTab = 'home' | 'schedule' | 'reservation'
+
+type Screen = { name: MainTab } | { name: 'recording' } | { name: 'confirm' }
 
 function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'home' })
-  // 予定データは画面内の一時的な状態のみ（保存・通信は行わない）
-  const [schedules, setSchedules] = useState<ScheduleItem[]>(initialSchedules)
+  // 戻り先（録音→確認 完了後にどのタブへ戻るか）
+  const [returnTab, setReturnTab] = useState<MainTab>('home')
 
-  const goHome = useCallback(() => setScreen({ name: 'home' }), [])
-  const goList = useCallback(() => setScreen({ name: 'list' }), [])
-  const startRecording = useCallback(() => setScreen({ name: 'recording' }), [])
-  const stopRecording = useCallback(() => setScreen({ name: 'confirm', mode: 'register' }), [])
-  const startEdit = useCallback(
-    (item: ScheduleItem) => setScreen({ name: 'confirm', mode: 'edit', item }),
-    [],
-  )
-  const deleteSchedule = useCallback((id: number) => {
-    setSchedules((prev) => prev.filter((item) => item.id !== id))
+  const goTab = useCallback((tab: MainTab) => setScreen({ name: tab }), [])
+  const startRecording = useCallback((from: MainTab) => {
+    setReturnTab(from)
+    setScreen({ name: 'recording' })
   }, [])
+  const stopRecording = useCallback(() => setScreen({ name: 'confirm' }), [])
+  const finishConfirm = useCallback(() => setScreen({ name: returnTab }), [returnTab])
 
   return (
     <div className="app-shell">
       {screen.name === 'home' && (
-        <HomeScreen onStartRecording={startRecording} onNavigateList={goList} />
+        <HomeScreen onStartRecording={() => startRecording('home')} onNavigateTab={goTab} />
       )}
+
+      {screen.name === 'schedule' && (
+        <ScheduleScreen onStartRecording={() => startRecording('schedule')} onNavigateTab={goTab} />
+      )}
+
+      {screen.name === 'reservation' && <ReservationScreen onNavigateTab={goTab} />}
 
       {screen.name === 'recording' && <RecordingScreen onStopRecording={stopRecording} />}
 
-      {screen.name === 'confirm' && screen.mode === 'register' && (
+      {screen.name === 'confirm' && (
         <ConfirmScreen
           mode="register"
-          item={recordedDummySchedule}
-          onComplete={goHome}
-          onCancel={goHome}
-        />
-      )}
-
-      {screen.name === 'confirm' && screen.mode === 'edit' && (
-        <ConfirmScreen mode="edit" item={screen.item} onComplete={goList} onCancel={goList} />
-      )}
-
-      {screen.name === 'list' && (
-        <ScheduleListScreen
-          schedules={schedules}
-          onNavigateHome={goHome}
-          onEdit={startEdit}
-          onDelete={deleteSchedule}
+          item={voiceDraftSchedule}
+          onComplete={finishConfirm}
+          onCancel={finishConfirm}
         />
       )}
     </div>

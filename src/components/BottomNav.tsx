@@ -1,31 +1,40 @@
-import { HomeIcon, CalendarIcon } from './icons'
+import { HomeIcon, CalendarIcon, BagIcon } from './icons'
 import './BottomNav.css'
 
+type Tab = 'home' | 'schedule' | 'reservation'
+
 interface BottomNavProps {
-  active: 'home' | 'list'
-  onNavigateHome: () => void
-  onNavigateList: () => void
+  active: Tab
+  onNavigateTab: (tab: Tab) => void
 }
 
-// 仕様書 6章: 下部メニューの仕様（①ホーム・④予定一覧のみで使用）
-export function BottomNav({ active, onNavigateHome, onNavigateList }: BottomNavProps) {
+// 参考画像の下部ナビゲーション（ホーム／予定／予約）。全メイン画面で固定表示する。
+export function BottomNav({ active, onNavigateTab }: BottomNavProps) {
   return (
     <nav className="bottom-nav" aria-label="画面メニュー">
       <button
         type="button"
         className={`bottom-nav__tab tap-feedback ${active === 'home' ? 'is-active' : ''}`}
-        onClick={onNavigateHome}
+        onClick={() => onNavigateTab('home')}
       >
-        <HomeIcon size={30} />
+        <HomeIcon size={24} />
         <span>ホーム</span>
       </button>
       <button
         type="button"
-        className={`bottom-nav__tab tap-feedback ${active === 'list' ? 'is-active' : ''}`}
-        onClick={onNavigateList}
+        className={`bottom-nav__tab tap-feedback ${active === 'schedule' ? 'is-active' : ''}`}
+        onClick={() => onNavigateTab('schedule')}
       >
-        <CalendarIcon size={30} />
-        <span>よてい</span>
+        <CalendarIcon size={24} />
+        <span>予定</span>
+      </button>
+      <button
+        type="button"
+        className={`bottom-nav__tab tap-feedback ${active === 'reservation' ? 'is-active' : ''}`}
+        onClick={() => onNavigateTab('reservation')}
+      >
+        <BagIcon size={24} />
+        <span>予約</span>
       </button>
     </nav>
   )
