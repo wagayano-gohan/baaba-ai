@@ -6,7 +6,8 @@ import mkcert from 'vite-plugin-mkcert'
 export default defineConfig({
   plugins: [react(), mkcert()],
   server: {
-    https: true,
+    // vite-plugin-mkcert が Vite 5+ ではhttps有効化を自動で行うため、`https: true` は不要
+    // （型定義上も ServerOptions と衝突してtscエラーになるため指定しない）。
     host: true,
     proxy: {
       // 音声認識プロキシサーバー（server/index.js）へ転送する。

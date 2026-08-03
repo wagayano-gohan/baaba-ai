@@ -44,6 +44,46 @@
   flex-shrink: 0;
 }
 
+.home-screen__notice-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.home-screen__notice-panel {
+  background: var(--color-card, #fff);
+  border-radius: var(--radius, 16px);
+  padding: 24px 28px;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: var(--shadow-float, 0 8px 24px rgba(0, 0, 0, 0.2));
+}
+
+.home-screen__notice-text {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.home-screen__notice-close {
+  min-height: 44px;
+  padding: 0 24px;
+  border-radius: var(--radius-sm, 10px);
+  border: none;
+  background: var(--color-accent, #2f7de1);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+}
+
 /* 次の予定カード */
 .next-schedule-card {
   background: var(--color-card);

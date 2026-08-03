@@ -11,8 +11,8 @@ import {
 } from '../components/icons'
 import type { Appointment } from '../lib/appointments'
 import { fetchUpcomingAppointments } from '../lib/appointments'
-import { userName, weather } from '../data/schedules'
 import { toDateLabel, toTimeLabel } from '../utils/date'
+import { getGreeting, formatTodayLabel } from '../utils/greeting'
 import './HomeScreen.css'
 
 interface HomeScreenProps {
@@ -29,6 +29,12 @@ type NextScheduleState =
 // 参考画像①ホーム画面
 export function HomeScreen({ onStartRecording, onNavigateTab }: HomeScreenProps) {
   const [state, setState] = useState<NextScheduleState>({ status: 'loading' })
+  const [showNotice, setShowNotice] = useState(false)
+
+  // 挨拶・日付は実際の「今日」を基準に動的に表示する（ハードコード日付は使わない）。
+  const now = new Date()
+  const [greetingWord, greetingName] = getGreeting(now).split('、')
+  const todayLabel = formatTodayLabel(now)
 
   useEffect(() => {
     let cancelled = false
@@ -51,20 +57,40 @@ export function HomeScreen({ onStartRecording, onNavigateTab }: HomeScreenProps)
 
   return (
     <div className="home-screen">
-      <TopBar right={<BellIcon size={22} />} />
+      <TopBar
+        right={
+          <button
+            type="button"
+            className="top-bar__icon-button tap-feedback"
+            aria-label="通知"
+            onClick={() => setShowNotice((v) => !v)}
+          >
+            <BellIcon size={22} />
+          </button>
+        }
+      />
+
+      {showNotice && (
+        <div className="home-screen__notice-overlay" onClick={() => setShowNotice(false)}>
+          <div className="home-screen__notice-panel" onClick={(e) => e.stopPropagation()}>
+            <p className="home-screen__notice-text">通知はまだありません</p>
+            <button type="button" className="home-screen__notice-close tap-feedback" onClick={() => setShowNotice(false)}>
+              閉じる
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="home-screen__scroll">
         <section className="home-screen__greeting-block">
           <h1 className="home-screen__greeting">
-            おはようございます、
+            {greetingWord}、
             <br />
-            {userName}
+            {greetingName}
           </h1>
           <p className="home-screen__weather">
             <SunIcon size={18} />
-            <span>
-              {weather.dateLabel}　{weather.summary}　最高{weather.high}℃／最低{weather.low}℃
-            </span>
+            <span>{todayLabel}　天気情報は準備中です</span>
           </p>
         </section>
 
