@@ -1,0 +1,9 @@
+/* 管理者PIN再設定画面。
+   レイアウトの実体（.pin-screen 系）はPIN関連画面で共通のため PinSetupScreen.css に定義してある。
+   このファイルにはこの画面だけで使う調整を置く。 */
+
+/* パスワードはPINと違い桁数が多く記号も入るため、PIN用の広い字間・大きな文字を戻す。 */
+.pin-screen__input--password {
+  font-size: 18px;
+  letter-spacing: normal;
+}

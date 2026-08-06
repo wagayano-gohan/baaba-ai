@@ -1,0 +1,122 @@
+.login-screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 24px 40px;
+  background: var(--color-page);
+}
+
+.login-screen__heading {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.login-screen__lead {
+  margin: 12px 0 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-label);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.login-screen__config-error {
+  margin: 24px 0 0;
+  padding: 16px;
+  background: var(--color-alert-tint);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-alert);
+  line-height: 1.6;
+}
+
+.login-form {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.login-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-form__label {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.login-form__input {
+  width: 100%;
+  min-height: 64px;
+  padding: 0 16px;
+  font-family: inherit;
+  font-size: 20px;
+  color: var(--color-text);
+  background: var(--color-card);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.login-form__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.login-form__input:disabled {
+  opacity: 0.6;
+}
+
+.login-form__error {
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--color-alert-tint);
+  border-radius: var(--radius-sm);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-alert);
+  line-height: 1.6;
+}
+
+.login-form__submit {
+  width: 100%;
+  min-height: 72px;
+  border-radius: var(--radius);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.login-form__submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.login-screen__device-link {
+  margin-top: auto;
+  padding-top: 32px;
+  align-self: center;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-accent);
+  text-decoration: underline;
+  line-height: 1.6;
+}
+
+.login-screen__device-link:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

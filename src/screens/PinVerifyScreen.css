@@ -1,0 +1,7 @@
+/* 管理者PIN確認画面。
+   レイアウトの実体（.pin-screen 系）はPIN関連画面で共通のため PinSetupScreen.css に定義してある。
+   このファイルにはこの画面だけで使う調整を置く。 */
+
+.pin-screen__section .pin-screen__textlink {
+  margin-top: 4px;
+}

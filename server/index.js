@@ -7,6 +7,7 @@ import dotenv from 'dotenv'
 import express from 'express'
 import multer from 'multer'
 import OpenAI from 'openai'
+import { chatRouter } from './chatRoutes.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -29,6 +30,9 @@ const PORT = Number(process.env.PORT || 8787)
 
 const app = express()
 app.use(express.json({ limit: '2mb' }))
+
+// AIチャット用ルート（server/chatRoutes.js。実装はAIチャット担当）。
+app.use(chatRouter)
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -64,18 +68,22 @@ app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
   }
 })
 
-// 予定登録の意図判定 + 日付・時刻・タイトルの構造化抽出スキーマ。
+// 予定/やること登録の意図判定 + 日付・時刻・タイトルの構造化抽出スキーマ。
+// 意図は supabase/functions/process-voice-input と同一の確定スキーマ
+// （create_event / create_task / ambiguous / unknown）に揃える。
 const INTENT_SCHEMA = {
   type: 'object',
   properties: {
     intent: {
       type: 'string',
-      enum: ['register_appointment', 'unknown'],
-      description: '予定登録の意図が読み取れれば register_appointment、そうでなければ unknown。',
+      enum: ['create_event', 'create_task', 'ambiguous', 'unknown'],
+      description:
+        'カレンダーに載せる予定なら create_event、完了を管理する行動（やること）なら create_task、' +
+        'どちらか判別できない場合は ambiguous、予定・やることの登録意図でない場合は unknown。日時の有無では判定しない。',
     },
     title: {
       type: ['string', 'null'],
-      description: '予定の内容・用件（例: "病院（内科）"）。読み取れなければ null。',
+      description: '予定・やることの内容（例: "病院（内科）"）。読み取れなければ null。',
     },
     date: {
       type: ['string', 'null'],
@@ -110,12 +118,17 @@ app.post('/api/extract-intent', async (req, res) => {
         {
           role: 'system',
           content: [
-            'あなたは高齢者向け音声予定登録アプリの意図解析器です。',
-            'ユーザーの発話（音声を文字起こししたテキスト）から、「予定を登録したい」という意図かどうかを判定し、',
-            '日付・時刻・予定のタイトル（用件）を抽出してください。',
-            `今日の日付は ${todayJST}（日本時間）です。「明日」「来週の月曜日」等の相対的な表現は、これを基準に絶対日付(YYYY-MM-DD)へ変換してください。`,
-            '予定登録の意図でない場合、または内容が予定として読み取れない場合は intent を "unknown" にし、他のフィールドは null にしてください。',
-            '予定のタイトルが読み取れれば intent を "register_appointment" としてください。日付や時刻が発話に含まれていなければ、対応するフィールドは null にしてください。',
+            'あなたは高齢者向け音声アシスタント「ばーばAI」の意図解析器です。',
+            'ユーザーの発話（音声を文字起こししたテキスト）から、「予定(create_event)」か「やること(create_task)」かを判定し、',
+            '内容（タイトル）・日付・時刻を抽出してください。',
+            `今日の日付は ${todayJST}（日本時間）です。「明日」「あさって」「来週の月曜日」等の相対的な表現は、これを基準に絶対日付(YYYY-MM-DD)へ変換してください。`,
+            '【判定基準】日時が含まれているかどうかでは判定しません。「カレンダー上の予定」なのか「完了を管理する行動」なのかで判定してください。',
+            'create_event（予定）… カレンダーに載せる予定。例: 病院、歯医者、会食、通院、外出予定、薬の予定、ゴミの日、記念日、指定時刻のリマインダー。',
+            'create_task（やること）… 完了チェックを目的とする行動。例: やること、買い物メモ、忘れ物チェック、期限付きToDo。',
+            'やることは期限(due_at)を持つ場合があります。期限や日時が伴っていても、行動の完了を管理するものは create_task です。',
+            '予定なのかやることなのか判別できない場合は、どちらかに決めつけず intent を "ambiguous" にしてください。タイトル・日付・時刻は読み取れた範囲で出力してください。',
+            'そもそも予定・やることの登録意図でない場合、または内容が読み取れない場合は intent を "unknown" にし、他のフィールドはすべて null にしてください。',
+            '発話に含まれていない日付・時刻は推測せず null にしてください。時刻は24時間表記のHH:MM形式で出力してください。',
           ].join('\n'),
         },
         { role: 'user', content: text },

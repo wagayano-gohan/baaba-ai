@@ -1,0 +1,170 @@
+/* Phase2 ②音声基盤: 音声内容の確認画面。
+   旧ConfirmScreen.cssのカード／大ボタン／完了オーバーレイの構成を踏襲する。 */
+
+.voice-confirm-screen {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 24px 40px;
+  position: relative;
+}
+
+.voice-confirm-screen__heading {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+  text-align: center;
+}
+
+.voice-confirm-transcript {
+  margin-top: 24px;
+  padding: 16px 20px;
+  background: var(--color-neutral-bg);
+  border-radius: var(--radius-sm);
+}
+
+.voice-confirm-transcript__label {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-label);
+  line-height: 1.6;
+}
+
+.voice-confirm-transcript__text {
+  margin: 8px 0 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.voice-confirm-card {
+  margin-top: 24px;
+  padding: 24px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+
+.voice-confirm-card--unknown {
+  background: var(--color-alert-tint);
+  box-shadow: none;
+}
+
+/* 予定／やることのどちらか決まらなかった場合（intent='ambiguous'）の選択カード。
+   エラーではないため警告色は使わず、注意を引く程度のトーンにする。 */
+.voice-confirm-card--choice {
+  background: var(--color-accent-tint);
+  box-shadow: none;
+}
+
+.voice-confirm-card__kind {
+  margin: 0;
+  align-self: flex-start;
+  padding: 4px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-dark);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.voice-confirm-card__date {
+  margin: 16px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.voice-confirm-card__time {
+  margin: 12px 0 0;
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.voice-confirm-card__content {
+  margin: 12px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.voice-confirm-card__prompt {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.voice-confirm-screen__error {
+  margin: 16px 0 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-danger);
+  line-height: 1.6;
+}
+
+.voice-confirm-screen__actions {
+  margin-top: auto;
+  padding-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.voice-confirm-button {
+  width: 100%;
+  min-height: 88px;
+  border-radius: var(--radius);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.voice-confirm-button:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.voice-confirm-button--primary {
+  background: var(--color-yes);
+  color: #ffffff;
+}
+
+.voice-confirm-button--secondary {
+  background: var(--color-neutral-bg);
+  color: var(--color-text);
+}
+
+.voice-confirm-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.88);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+}
+
+.voice-confirm-overlay__text {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.6;
+}

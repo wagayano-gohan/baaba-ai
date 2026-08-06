@@ -1,0 +1,178 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { StopIcon } from '../components/icons'
+import { VoiceRecorder, VoiceRecorderError } from '../lib/voice/recorder'
+import { extractIntent, transcribeAudio } from '../lib/voice/voicePipeline'
+import type { VoiceIntentResult } from '../lib/voice/voicePipeline'
+import './VoiceRecordScreen.css'
+
+interface VoiceRecordScreenProps {
+  /** 文字起こしと意図抽出まで成功したときに呼ばれる。 */
+  onRecognized: (result: VoiceIntentResult, transcript: string) => void
+  /** マイク不可・文字起こし失敗などで、録音フローを中断するときに呼ばれる。 */
+  onCancel: () => void
+}
+
+type Phase = 'starting' | 'recording' | 'transcribing' | 'extracting' | 'error'
+
+const MIC_ERROR_MESSAGE = 'マイクを つかえませんでした'
+const TRANSCRIBE_ERROR_MESSAGE = 'うまく ききとれませんでした'
+const RETURN_DELAY_MS = 2400
+
+// Phase2 ②音声基盤: 録音 → transcribe-audio（文字起こし）→ process-voice-input（意図解析）。
+// 実際のDB書き込みは行わず、結果は確認画面(VoiceConfirmScreen)へ渡す。
+export function VoiceRecordScreen({ onRecognized, onCancel }: VoiceRecordScreenProps) {
+  const [phase, setPhase] = useState<Phase>('starting')
+  const [errorText, setErrorText] = useState('')
+
+  const recorderRef = useRef<VoiceRecorder | null>(null)
+  // 停止処理を二重に走らせないためのフラグ。
+  const handledRef = useRef(false)
+  // 「やめる」または画面離脱でこのフローが終了したことを示すフラグ。
+  // 処理中に中断した場合、後から届いたfetchのレスポンスでsetStateやonRecognizedが
+  // 呼ばれないようにするために使う。
+  const abandonedRef = useRef(false)
+
+  // マウント時に録音を開始する。
+  useEffect(() => {
+    let cancelled = false
+    const recorder = new VoiceRecorder()
+    recorderRef.current = recorder
+
+    void (async () => {
+      try {
+        await recorder.start()
+        if (cancelled) {
+          recorder.cancel()
+          return
+        }
+        setPhase('recording')
+      } catch (error) {
+        if (cancelled) return
+        console.error('[VoiceRecordScreen] 録音を開始できませんでした:', error)
+        setErrorText(
+          error instanceof VoiceRecorderError && error.kind === 'unsupported'
+            ? 'この きかいでは こえを つかえません'
+            : MIC_ERROR_MESSAGE,
+        )
+        setPhase('error')
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      abandonedRef.current = true
+      // 画面を離れるときは必ずマイクを解放する。
+      recorder.cancel()
+    }
+  }, [])
+
+  // エラー表示は一定時間見せてから呼び出し元へ戻す。
+  useEffect(() => {
+    if (phase !== 'error') return
+    const timer = window.setTimeout(() => onCancel(), RETURN_DELAY_MS)
+    return () => window.clearTimeout(timer)
+  }, [phase, onCancel])
+
+  const handleStop = useCallback(() => {
+    const recorder = recorderRef.current
+    if (!recorder || handledRef.current) return
+    handledRef.current = true
+    setPhase('transcribing')
+
+    void (async () => {
+      try {
+        const audio = await recorder.stop()
+        if (abandonedRef.current) return
+
+        const transcript = await transcribeAudio(audio.blob, audio.mimeType)
+        if (abandonedRef.current) return
+
+        setPhase('extracting')
+        const result = await extractIntent(transcript)
+        if (abandonedRef.current) return
+
+        onRecognized(result, transcript)
+      } catch (error) {
+        // 中断後に届いた失敗はもう画面に出さない。
+        if (abandonedRef.current) return
+        console.error('[VoiceRecordScreen] 音声処理に失敗しました:', error)
+        setErrorText(
+          error instanceof VoiceRecorderError && error.kind === 'empty_audio'
+            ? 'こえが きこえませんでした'
+            : TRANSCRIBE_ERROR_MESSAGE,
+        )
+        setPhase('error')
+      }
+    })()
+  }, [onRecognized])
+
+  // 録音中・処理中のどちらでも押せる中断導線。
+  // 通信が返らないときでもユーザーが自分で画面から抜けられるようにする。
+  const handleAbort = useCallback(() => {
+    if (abandonedRef.current) return
+    abandonedRef.current = true
+    handledRef.current = true
+    // マイクのトラックを確実に解放してから戻る。
+    recorderRef.current?.cancel()
+    onCancel()
+  }, [onCancel])
+
+  const isBusy = phase === 'transcribing' || phase === 'extracting'
+
+  let title = 'きいています'
+  if (phase === 'starting') title = 'じゅんび しています'
+  if (isBusy) title = 'かんがえています'
+
+  let hint = 'おはなし ください'
+  if (phase === 'starting') hint = 'すこし おまちください'
+  if (phase === 'transcribing') hint = 'もじに しています…'
+  if (phase === 'extracting') hint = 'ないようを かくにん しています…'
+
+  return (
+    <div className="voice-record-screen">
+      {phase === 'error' ? (
+        <div className="voice-record-screen__message">
+          <h1 className="voice-record-screen__title">{errorText}</h1>
+          <p className="voice-record-screen__caption">もう いちど おねがいします</p>
+        </div>
+      ) : (
+        <div className="voice-record-screen__message">
+          <h1 className="voice-record-screen__title">{title}</h1>
+          <div className="voice-record-screen__indicator">
+            <span
+              className={
+                phase === 'recording'
+                  ? 'voice-record-dot voice-record-dot--live'
+                  : 'voice-record-dot'
+              }
+              aria-hidden="true"
+            />
+            <span className="voice-record-screen__hint">{hint}</span>
+          </div>
+        </div>
+      )}
+
+      {phase !== 'error' && (
+        <div className="voice-record-screen__action">
+          {phase === 'recording' && (
+            <>
+              <button
+                type="button"
+                className="voice-stop-button tap-feedback"
+                onClick={handleStop}
+                aria-label="おわったら ボタンを おしてください"
+              >
+                <StopIcon size={44} />
+              </button>
+              <p className="voice-record-screen__caption">おわったら ボタンを おしてください</p>
+            </>
+          )}
+
+          <button type="button" className="voice-abort-button tap-feedback" onClick={handleAbort}>
+            やめる
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
