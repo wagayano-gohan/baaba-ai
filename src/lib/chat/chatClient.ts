@@ -6,6 +6,7 @@
 import { ApiCallError, callFlexibleAuthedFunction } from '../apiClient'
 import { DEFAULT_SEND_LIMIT, takeRecent } from './conversation'
 import type { ChatMessage } from './conversation'
+import { sanitizeAnswerText } from './sanitize'
 
 const CHAT_FUNCTION_NAME = 'ai-chat'
 
@@ -44,7 +45,14 @@ export async function sendChatMessage(
     throw new Error(SERVER_ERROR_MESSAGE)
   }
 
-  const text = typeof data.text === 'string' ? data.text.trim() : ''
+  const raw = typeof data.text === 'string' ? data.text.trim() : ''
+  if (!raw) {
+    throw new Error(EMPTY_ANSWER_MESSAGE)
+  }
+
+  // system promptでURL・マークダウンの使用を禁止しているが、モデルが従わない場合に備えて
+  // 表示直前にも取り除く（二重の担保）。根拠URLは Edge Function 側が sources として保持済み。
+  const text = sanitizeAnswerText(raw)
   if (!text) {
     throw new Error(EMPTY_ANSWER_MESSAGE)
   }
