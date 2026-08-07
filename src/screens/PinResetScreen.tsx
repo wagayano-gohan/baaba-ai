@@ -1,6 +1,6 @@
 // 管理者PINを忘れた場合の再設定画面。
 //
-// いまのPINが分からなくても、ログインパスワードを再入力できれば新しいPINに置き換えられる。
+// 現在のPINが分からなくても、ログインパスワードを再入力できれば新しいPINに置き換えられる。
 // 呼び出すEdge Function: manage-admin-pin（operation: 'reset'）
 //
 // セキュリティ上の約束:
@@ -60,11 +60,11 @@ export function PinResetScreen({ profileId, onDone, onBack }: PinResetScreenProp
     setErrorMessage(null)
 
     if (!password) {
-      setErrorMessage('ログインのパスワードを入力してください')
+      setErrorMessage('ログインパスワードを入力してください')
       return
     }
     if (!PIN_PATTERN.test(newPin)) {
-      setErrorMessage('あたらしいPINは数字4桁で入力してください')
+      setErrorMessage('新しいPINは数字4桁で入力してください')
       return
     }
     if (newPin !== confirmPin) {
@@ -72,7 +72,7 @@ export function PinResetScreen({ profileId, onDone, onBack }: PinResetScreenProp
       return
     }
     if (!profileId) {
-      setErrorMessage('対象の家族が選ばれていません')
+      setErrorMessage('対象のご家族が選択されていません')
       return
     }
 
@@ -107,29 +107,29 @@ export function PinResetScreen({ profileId, onDone, onBack }: PinResetScreenProp
         </button>
         <h1 className="pin-screen__heading">管理者PINの再設定</h1>
         <p className="pin-screen__lead">
-          いまのPINが分からない場合は、ログインのパスワードを入力すると
-          あたらしいPINに変えられます。
+          現在のPINが分からない場合は、ログインパスワードを入力することで
+          新しいPINに変更できます。
         </p>
       </header>
 
       {succeeded ? (
         <section className="pin-screen__section pin-screen__section--done">
           <p className="pin-screen__success" role="status">
-            あたらしい管理者PINを設定しました
+            新しい管理者PINを設定しました
           </p>
           <button
             type="button"
             className="pin-screen__button pin-screen__button--primary tap-feedback"
             onClick={onDone}
           >
-            終わる
+            完了
           </button>
         </section>
       ) : (
         <section className="pin-screen__section">
           <form className="pin-screen__form" onSubmit={handleSubmit} noValidate>
             <label className="pin-screen__field">
-              <span className="pin-screen__label">ログインのパスワード</span>
+              <span className="pin-screen__label">ログインパスワード</span>
               <input
                 className="pin-screen__input pin-screen__input--password"
                 type="password"
@@ -144,7 +144,7 @@ export function PinResetScreen({ profileId, onDone, onBack }: PinResetScreenProp
             </label>
 
             <label className="pin-screen__field">
-              <span className="pin-screen__label">あたらしいPIN（数字4桁）</span>
+              <span className="pin-screen__label">新しいPIN（数字4桁）</span>
               <input
                 className="pin-screen__input"
                 type="password"
@@ -161,7 +161,7 @@ export function PinResetScreen({ profileId, onDone, onBack }: PinResetScreenProp
             </label>
 
             <label className="pin-screen__field">
-              <span className="pin-screen__label">確認のため もう一度</span>
+              <span className="pin-screen__label">確認のためもう一度入力</span>
               <input
                 className="pin-screen__input"
                 type="password"
@@ -188,7 +188,7 @@ export function PinResetScreen({ profileId, onDone, onBack }: PinResetScreenProp
               className="pin-screen__button pin-screen__button--primary tap-feedback"
               disabled={submitting}
             >
-              {submitting ? '再設定しています…' : 'あたらしいPINにする'}
+              {submitting ? '再設定しています…' : '新しいPINを設定する'}
             </button>
           </form>
         </section>

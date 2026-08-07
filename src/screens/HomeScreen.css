@@ -1,0 +1,125 @@
+/* ホーム画面のスタイル。
+   文字は最低18px、主要ボタンは80px以上のタップ領域を確保する。
+   アクセント色（--color-accent）は主役である音声ボタンにのみ使う。 */
+
+.home {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 32px 24px 24px;
+  background: var(--color-page);
+}
+
+/* あいさつと日付は「こんばんは　8月6日（木）」のように一続きで読ませる。
+   幅が足りない端末では自然に折り返す。 */
+.home__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  column-gap: 14px;
+  row-gap: 4px;
+}
+
+.home__greeting {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.45;
+}
+
+.home__date {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-label);
+  line-height: 1.45;
+}
+
+/* 画面の主役。円形の大きなボタンで、押すべき場所を迷わせない。 */
+.home__voice {
+  align-self: center;
+  margin-top: 36px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #ffffff;
+  box-shadow: var(--shadow-float);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.home__voice-icon {
+  display: flex;
+}
+
+.home__voice-label {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.home__schedule {
+  margin-top: 36px;
+  padding: 20px 22px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+.home__schedule-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-label);
+  line-height: 1.5;
+}
+
+.home__schedule-empty {
+  margin: 12px 0 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.7;
+}
+
+.home__chat {
+  margin-top: 20px;
+  width: 100%;
+  min-height: 76px;
+  padding: 0 16px;
+  border-radius: var(--radius);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-card);
+  color: var(--color-accent-dark);
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* 管理者向け。ご本人が誤って押さないよう、控えめに下端へ置く。 */
+.home__footer {
+  margin-top: auto;
+  padding-top: 28px;
+  display: flex;
+  justify-content: center;
+}
+
+.home__settings {
+  min-height: 44px;
+  padding: 0 16px;
+  background: none;
+  color: var(--color-sublabel);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: underline;
+}

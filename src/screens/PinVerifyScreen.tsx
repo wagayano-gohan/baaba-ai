@@ -29,7 +29,7 @@ interface VerifyAdminPinResponse {
 
 const PIN_PATTERN = /^\d{4}$/
 
-// サーバー側のロック条件。画面では「残り何回まちがえられるか」の目安表示にのみ使う
+// サーバー側のロック条件。画面では「あと何回間違えられるか」の目安表示にのみ使う
 // （実際の試行回数はサーバーが保持しており、この画面のカウントは同一画面内での目安）。
 const MAX_ATTEMPTS = 5
 
@@ -47,7 +47,7 @@ export function PinVerifyScreen({
   const [pin, setPin] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  // この画面で数えたまちがえた回数（サーバーの正確な残数は取得できないため、あくまで目安）。
+  // この画面で数えた失敗回数（サーバーの正確な残数は取得できないため、あくまで目安）。
   const [failedCount, setFailedCount] = useState(0)
   // 423 PIN_LOCKED。以降は再入力させない。
   const [locked, setLocked] = useState(false)
@@ -67,7 +67,7 @@ export function PinVerifyScreen({
       return
     }
     if (!profileId) {
-      setErrorMessage('対象の家族が選ばれていません')
+      setErrorMessage('対象のご家族が選択されていません')
       return
     }
 
@@ -88,17 +88,17 @@ export function PinVerifyScreen({
       if (error instanceof ApiCallError) {
         if (error.code === 'PIN_LOCKED' || error.status === 423) {
           setLocked(true)
-          setErrorMessage('PINが5回まちがえられたため、15分間ロックされています')
+          setErrorMessage('PINを5回連続で間違えたため、15分間ロックされています')
         } else if (error.code === 'PIN_INVALID') {
           const nextCount = failedCount + 1
           setFailedCount(nextCount)
           const remaining = Math.max(0, MAX_ATTEMPTS - nextCount)
           setErrorMessage(
-            `PINが違います（あと${remaining}回まちがえると15分間ロックされます／回数の目安）`,
+            `PINが正しくありません（あと${remaining}回間違えると15分間ロックされます／回数は目安です）`,
           )
         } else if (error.code === 'PIN_NOT_SET') {
           setNotSet(true)
-          setErrorMessage('管理者PINがまだ設定されていません')
+          setErrorMessage('管理者PINが未設定です')
         } else if (error.code === 'AUTH_SESSION_ID_MISSING' || error.code === 'UNAUTHENTICATED') {
           setErrorMessage('ログインし直してから、もう一度お試しください')
         } else if (error.code === 'PROFILE_ACCESS_DENIED') {
@@ -122,7 +122,7 @@ export function PinVerifyScreen({
         </button>
         <h1 className="pin-screen__heading">管理者PINの確認</h1>
         <p className="pin-screen__lead">
-          大事な操作をするまえに、管理者PIN（数字4桁）を入力してください。
+          重要な操作を行う前に、管理者PIN（数字4桁）を入力してください。
         </p>
       </header>
 
@@ -130,11 +130,11 @@ export function PinVerifyScreen({
         {locked ? (
           <>
             <p className="pin-screen__error" role="alert">
-              PINが5回まちがえられたため、15分間ロックされています
+              PINを5回連続で間違えたため、15分間ロックされています
             </p>
             <p className="pin-screen__note">
-              しばらく待ってからもう一度お試しください。PINが分からない場合は、
-              ログインのパスワードで再設定できます。
+              しばらく時間をおいてからお試しください。PINが分からない場合は、
+              ログインパスワードで再設定できます。
             </p>
             <button
               type="button"
@@ -147,9 +147,9 @@ export function PinVerifyScreen({
         ) : notSet ? (
           <>
             <p className="pin-screen__error" role="alert">
-              管理者PINがまだ設定されていません
+              管理者PINが未設定です
             </p>
-            <p className="pin-screen__note">さきに管理者PINを設定してください。</p>
+            <p className="pin-screen__note">先に管理者PINを設定してください。</p>
             {onGoSetup && (
               <button
                 type="button"
@@ -180,9 +180,7 @@ export function PinVerifyScreen({
                 />
               </label>
 
-              <p className="pin-screen__note">
-                5回まちがえると、15分間ロックされます。
-              </p>
+              <p className="pin-screen__note">5回連続で間違えると、15分間ロックされます。</p>
 
               {errorMessage && (
                 <p className="pin-screen__error" role="alert">

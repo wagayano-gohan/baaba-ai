@@ -10,7 +10,7 @@ import './LoginScreen.css'
 interface LoginScreenProps {
   /** ログイン成功時に呼ばれる（画面遷移は呼び出し側の責務）。 */
   onLoggedIn?: () => void
-  /** 「本人用端末として使う」導線。渡された場合のみボタンを表示する。 */
+  /** 「ご本人用の端末として設定する」導線。渡された場合のみボタンを表示する。 */
   onGoDeviceSetup?: () => void
 }
 
@@ -26,7 +26,7 @@ function toJapaneseAuthMessage(error: unknown): string {
     return 'メールアドレスの確認が完了していません。確認メールをご確認ください'
   }
   if (code === 'over_request_rate_limit' || message.includes('Too many requests')) {
-    return '試行回数が多すぎます。しばらく時間をおいてからお試しください'
+    return '試行回数が上限に達しました。しばらく時間をおいてからお試しください'
   }
   if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
     return 'サーバーに接続できませんでした。通信環境を確認してください'
@@ -68,7 +68,7 @@ export function LoginScreen({ onLoggedIn, onGoDeviceSetup }: LoginScreenProps) {
   return (
     <div className="login-screen">
       <h1 className="login-screen__heading">ばーばAI</h1>
-      <p className="login-screen__lead">ご家族の方はこちらからログインしてください</p>
+      <p className="login-screen__lead">ご家族の方はこちらからログインしてください。</p>
 
       {configError && <p className="login-screen__config-error">{configError}</p>}
 
@@ -124,7 +124,7 @@ export function LoginScreen({ onLoggedIn, onGoDeviceSetup }: LoginScreenProps) {
           onClick={onGoDeviceSetup}
           disabled={submitting}
         >
-          本人（おばあちゃん）用の端末として使う
+          ご本人用の端末として設定する
         </button>
       )}
     </div>

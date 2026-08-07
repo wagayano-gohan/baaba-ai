@@ -9,6 +9,7 @@ import type { CSSProperties } from 'react'
 import { useAuth } from './contexts/AuthContext'
 import { LoginScreen } from './screens/LoginScreen'
 import { DeviceSetupScreen } from './screens/DeviceSetupScreen'
+import { HomeScreen } from './screens/HomeScreen'
 import { Phase2MenuScreen } from './screens/Phase2MenuScreen'
 import { PinSetupScreen } from './screens/PinSetupScreen'
 import { PinVerifyScreen } from './screens/PinVerifyScreen'
@@ -23,6 +24,7 @@ import type { VoiceIntentResult } from './lib/voice/voicePipeline'
 type PinVerifyOrigin = 'menu' | 'deviceSetup'
 
 type Screen =
+  | { name: 'home' }
   | { name: 'menu' }
   | { name: 'deviceSetup' }
   | { name: 'pinSetup' }
@@ -41,8 +43,8 @@ const statusStyle: CSSProperties = {
   justifyContent: 'center',
   padding: '32px 24px',
   textAlign: 'center',
-  fontSize: '20px',
-  fontWeight: 600,
+  fontSize: '18px',
+  fontWeight: 500,
   lineHeight: 1.6,
   color: 'var(--color-text)',
   background: 'var(--color-page)',
@@ -55,10 +57,12 @@ const errorStatusStyle: CSSProperties = {
 
 function App() {
   const { loading, configError, user, deviceRegistered, activeProfileId, activeRole } = useAuth()
-  const [screen, setScreen] = useState<Screen>({ name: 'menu' })
+  const [screen, setScreen] = useState<Screen>({ name: 'home' })
   // 未ログイン時に「本人用端末として使う」からDeviceSetupScreenへ入ったかどうか。
   const [setupFromLogin, setSetupFromLogin] = useState(false)
 
+  // 本人が使う起点はホーム画面。管理者向けメニュー（menu）はホームの「設定」から入る。
+  const goHome = useCallback(() => setScreen({ name: 'home' }), [])
   const goMenu = useCallback(() => setScreen({ name: 'menu' }), [])
   const goDeviceSetup = useCallback(() => setScreen({ name: 'deviceSetup' }), [])
   const goVoiceRecord = useCallback(() => setScreen({ name: 'voiceRecord' }), [])
@@ -82,12 +86,12 @@ function App() {
 
   const closeDeviceSetupToLogin = useCallback(() => {
     setSetupFromLogin(false)
-    setScreen({ name: 'menu' })
+    setScreen({ name: 'home' })
   }, [])
 
   const handleLoggedIn = useCallback(() => {
     setSetupFromLogin(false)
-    setScreen({ name: 'menu' })
+    setScreen({ name: 'home' })
   }, [])
 
   // 本人(principal)端末はメール・パスワードを使わない設計のため、
@@ -153,21 +157,22 @@ function App() {
   } else if (showPinScreen && screen.name === 'pinReset') {
     content = <PinResetScreen profileId={pinProfileId} onDone={goMenu} onBack={goMenu} />
   } else if (screen.name === 'voiceRecord') {
-    content = <VoiceRecordScreen onRecognized={handleRecognized} onCancel={goMenu} />
+    content = <VoiceRecordScreen onRecognized={handleRecognized} onCancel={goHome} />
   } else if (screen.name === 'voiceConfirm') {
     content = (
       <VoiceConfirmScreen
         result={screen.result}
         transcript={screen.transcript}
-        onDone={goMenu}
+        onDone={goHome}
         onRetry={goVoiceRecord}
       />
     )
   } else if (screen.name === 'chat') {
-    content = <ChatScreen onBack={goMenu} />
-  } else {
+    content = <ChatScreen onBack={goHome} />
+  } else if (screen.name === 'menu') {
     content = (
       <Phase2MenuScreen
+        onBack={goHome}
         onGoVoice={goVoiceRecord}
         onGoChat={goChat}
         onGoDeviceSetup={goDeviceSetup}
@@ -176,6 +181,8 @@ function App() {
         onGoPinReset={goPinReset}
       />
     )
+  } else {
+    content = <HomeScreen onGoVoice={goVoiceRecord} onGoChat={goChat} onGoSettings={goMenu} />
   }
 
   return <div className="app-shell">{content}</div>

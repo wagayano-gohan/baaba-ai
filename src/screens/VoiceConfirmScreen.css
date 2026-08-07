@@ -13,10 +13,10 @@
 
 .voice-confirm-screen__heading {
   margin: 0;
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 27px;
+  font-weight: 600;
   color: var(--color-text);
-  line-height: 1.6;
+  line-height: 1.55;
   text-align: center;
 }
 
@@ -29,18 +29,18 @@
 
 .voice-confirm-transcript__label {
   margin: 0;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--color-label);
   line-height: 1.6;
 }
 
 .voice-confirm-transcript__text {
   margin: 8px 0 0;
-  font-size: 24px;
-  font-weight: 700;
+  font-size: 21px;
+  font-weight: 500;
   color: var(--color-text);
-  line-height: 1.6;
+  line-height: 1.7;
   word-break: break-word;
 }
 
@@ -69,35 +69,35 @@
 .voice-confirm-card__kind {
   margin: 0;
   align-self: flex-start;
-  padding: 4px 16px;
+  padding: 5px 16px;
   border-radius: var(--radius-pill);
   background: var(--color-accent-tint);
   color: var(--color-accent-dark);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   line-height: 1.6;
 }
 
 .voice-confirm-card__date {
   margin: 16px 0 0;
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 600;
   color: var(--color-text);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 .voice-confirm-card__time {
-  margin: 12px 0 0;
-  font-size: 40px;
-  font-weight: 700;
+  margin: 8px 0 0;
+  font-size: 34px;
+  font-weight: 600;
   color: var(--color-text);
-  line-height: 1.6;
+  line-height: 1.4;
 }
 
 .voice-confirm-card__content {
   margin: 12px 0 0;
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 600;
   color: var(--color-text);
   line-height: 1.6;
   word-break: break-word;
@@ -105,16 +105,16 @@
 
 .voice-confirm-card__prompt {
   margin: 0;
-  font-size: 26px;
-  font-weight: 700;
+  font-size: 21px;
+  font-weight: 600;
   color: var(--color-text);
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .voice-confirm-screen__error {
   margin: 16px 0 0;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 17px;
+  font-weight: 600;
   color: var(--color-danger);
   line-height: 1.6;
 }
@@ -124,16 +124,17 @@
   padding-top: 32px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
 .voice-confirm-button {
   width: 100%;
-  min-height: 88px;
+  min-height: 80px;
+  padding: 0 16px;
   border-radius: var(--radius);
-  font-size: 28px;
-  font-weight: 700;
-  line-height: 1.6;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.5;
 }
 
 .voice-confirm-button:disabled {
@@ -163,8 +164,8 @@
 
 .voice-confirm-overlay__text {
   margin: 0;
-  font-size: 32px;
-  font-weight: 700;
+  font-size: 28px;
+  font-weight: 600;
   color: var(--color-text);
   line-height: 1.6;
 }

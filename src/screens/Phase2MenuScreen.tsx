@@ -9,9 +9,11 @@ import { useAuth } from '../contexts/AuthContext'
 import './Phase2MenuScreen.css'
 
 interface Phase2MenuScreenProps {
-  /** 「おはなしする（音声）」を押したとき。 */
+  /** 「ホームに戻る」を押したとき。ホーム画面の「設定」から入ったときに渡される。 */
+  onBack?: () => void
+  /** 「話しかける（音声入力）」を押したとき。 */
   onGoVoice: () => void
-  /** 「AIとチャット」を押したとき。 */
+  /** 「AIに相談」を押したとき。 */
   onGoChat: () => void
   /** 「本人端末の設定」を押したとき。 */
   onGoDeviceSetup: () => void
@@ -25,10 +27,11 @@ interface Phase2MenuScreenProps {
 
 const ROLE_LABELS: Record<string, string> = {
   owner_admin: '管理者',
-  viewer: '見るだけ',
+  viewer: '閲覧のみ',
 }
 
 export function Phase2MenuScreen({
+  onBack,
   onGoVoice,
   onGoChat,
   onGoDeviceSetup,
@@ -64,13 +67,19 @@ export function Phase2MenuScreen({
 
   return (
     <div className="phase2-menu">
+      {onBack && (
+        <button type="button" className="phase2-menu__back tap-feedback" onClick={onBack}>
+          ← ホームに戻る
+        </button>
+      )}
+
       <header className="phase2-menu__header">
         <h1 className="phase2-menu__heading">ばーばAI</h1>
-        <p className="phase2-menu__lead">やりたいことを えらんでください</p>
+        <p className="phase2-menu__lead">操作を選択してください</p>
       </header>
 
       {deviceRegistered && (
-        <p className="phase2-menu__device-badge">この端末は本人用です</p>
+        <p className="phase2-menu__device-badge">この端末はご本人用として設定されています</p>
       )}
 
       <div className="phase2-menu__buttons">
@@ -79,7 +88,7 @@ export function Phase2MenuScreen({
           className="phase2-menu__button phase2-menu__button--primary tap-feedback"
           onClick={onGoVoice}
         >
-          おはなしする（音声）
+          話しかける（音声入力）
         </button>
 
         <button
@@ -87,7 +96,7 @@ export function Phase2MenuScreen({
           className="phase2-menu__button phase2-menu__button--primary tap-feedback"
           onClick={onGoChat}
         >
-          AIとチャット
+          AIに相談
         </button>
 
         <button
@@ -103,7 +112,7 @@ export function Phase2MenuScreen({
         <section className="phase2-menu__admin">
           <h2 className="phase2-menu__admin-title">管理者メニュー</h2>
           <p className="phase2-menu__admin-note">
-            本人端末の登録などの大事な操作には、管理者PIN（数字4桁）の確認が必要です。
+            ご本人用端末の登録など、重要な操作には管理者PIN（数字4桁）の確認が必要です。
           </p>
           <div className="phase2-menu__admin-buttons">
             {onGoPinSetup && (
@@ -154,7 +163,7 @@ export function Phase2MenuScreen({
                 ? `${activeMembership.profileName ?? activeMembership.profileId}（${
                     ROLE_LABELS[activeRole ?? ''] ?? activeRole ?? '権限不明'
                   }）`
-                : '対象の家族が選ばれていません'}
+                : '対象のご家族が選択されていません'}
             </p>
           )}
 

@@ -82,7 +82,7 @@ export function PinSetupScreen({
       return
     }
     if (!profileId) {
-      setErrorMessage('対象の家族が選ばれていません')
+      setErrorMessage('対象のご家族が選択されていません')
       return
     }
 
@@ -115,8 +115,8 @@ export function PinSetupScreen({
         </button>
         <h1 className="pin-screen__heading">管理者PINの設定</h1>
         <p className="pin-screen__lead">
-          本人用端末の登録などの大事な操作のときに使う、数字4桁の暗証番号を決めてください。
-          ログインのパスワードとは別のものです。
+          ご本人用端末の登録など、重要な操作の際に使用する数字4桁の暗証番号を設定してください。
+          ログインパスワードとは別のものです。
         </p>
       </header>
 
@@ -130,14 +130,14 @@ export function PinSetupScreen({
             className="pin-screen__button pin-screen__button--primary tap-feedback"
             onClick={onDone}
           >
-            終わる
+            完了
           </button>
         </section>
       ) : (
         <section className="pin-screen__section">
           <form className="pin-screen__form" onSubmit={handleSubmit} noValidate>
             <label className="pin-screen__field">
-              <span className="pin-screen__label">あたらしいPIN（数字4桁）</span>
+              <span className="pin-screen__label">新しいPIN（数字4桁）</span>
               <input
                 className="pin-screen__input"
                 type="password"
@@ -154,7 +154,7 @@ export function PinSetupScreen({
             </label>
 
             <label className="pin-screen__field">
-              <span className="pin-screen__label">確認のため もう一度</span>
+              <span className="pin-screen__label">確認のためもう一度入力</span>
               <input
                 className="pin-screen__input"
                 type="password"
@@ -181,15 +181,15 @@ export function PinSetupScreen({
               className="pin-screen__button pin-screen__button--primary tap-feedback"
               disabled={submitting}
             >
-              {submitting ? '設定しています…' : 'このPINにする'}
+              {submitting ? '設定しています…' : 'このPINを設定する'}
             </button>
           </form>
 
           {alreadyExists && (
             <div className="pin-screen__links">
               <p className="pin-screen__note">
-                PINを変えたい場合は、いまのPINを入力してから変更してください。
-                PINが分からない場合は、ログインのパスワードで再設定できます。
+                PINを変更する場合は、現在のPINを入力してから変更してください。
+                PINが分からない場合は、ログインパスワードで再設定できます。
               </p>
               {onGoVerify && (
                 <button
@@ -197,7 +197,7 @@ export function PinSetupScreen({
                   className="pin-screen__button pin-screen__button--secondary tap-feedback"
                   onClick={onGoVerify}
                 >
-                  いまのPINを入力する
+                  現在のPINを入力する
                 </button>
               )}
               {onGoReset && (

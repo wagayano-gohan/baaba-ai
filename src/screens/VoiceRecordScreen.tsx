@@ -14,8 +14,8 @@ interface VoiceRecordScreenProps {
 
 type Phase = 'starting' | 'recording' | 'transcribing' | 'extracting' | 'error'
 
-const MIC_ERROR_MESSAGE = 'マイクを つかえませんでした'
-const TRANSCRIBE_ERROR_MESSAGE = 'うまく ききとれませんでした'
+const MIC_ERROR_MESSAGE = 'マイクを使用できませんでした'
+const TRANSCRIBE_ERROR_MESSAGE = '音声を認識できませんでした'
 const RETURN_DELAY_MS = 2400
 
 // Phase2 ②音声基盤: 録音 → transcribe-audio（文字起こし）→ process-voice-input（意図解析）。
@@ -27,7 +27,7 @@ export function VoiceRecordScreen({ onRecognized, onCancel }: VoiceRecordScreenP
   const recorderRef = useRef<VoiceRecorder | null>(null)
   // 停止処理を二重に走らせないためのフラグ。
   const handledRef = useRef(false)
-  // 「やめる」または画面離脱でこのフローが終了したことを示すフラグ。
+  // 「中止する」または画面離脱でこのフローが終了したことを示すフラグ。
   // 処理中に中断した場合、後から届いたfetchのレスポンスでsetStateやonRecognizedが
   // 呼ばれないようにするために使う。
   const abandonedRef = useRef(false)
@@ -51,7 +51,7 @@ export function VoiceRecordScreen({ onRecognized, onCancel }: VoiceRecordScreenP
         console.error('[VoiceRecordScreen] 録音を開始できませんでした:', error)
         setErrorText(
           error instanceof VoiceRecorderError && error.kind === 'unsupported'
-            ? 'この きかいでは こえを つかえません'
+            ? 'この端末では音声入力を利用できません'
             : MIC_ERROR_MESSAGE,
         )
         setPhase('error')
@@ -98,7 +98,7 @@ export function VoiceRecordScreen({ onRecognized, onCancel }: VoiceRecordScreenP
         console.error('[VoiceRecordScreen] 音声処理に失敗しました:', error)
         setErrorText(
           error instanceof VoiceRecorderError && error.kind === 'empty_audio'
-            ? 'こえが きこえませんでした'
+            ? '音声が検出されませんでした'
             : TRANSCRIBE_ERROR_MESSAGE,
         )
         setPhase('error')
@@ -119,21 +119,21 @@ export function VoiceRecordScreen({ onRecognized, onCancel }: VoiceRecordScreenP
 
   const isBusy = phase === 'transcribing' || phase === 'extracting'
 
-  let title = 'きいています'
-  if (phase === 'starting') title = 'じゅんび しています'
-  if (isBusy) title = 'かんがえています'
+  let title = 'お聞きしています'
+  if (phase === 'starting') title = '準備しています'
+  if (isBusy) title = '処理しています'
 
-  let hint = 'おはなし ください'
-  if (phase === 'starting') hint = 'すこし おまちください'
-  if (phase === 'transcribing') hint = 'もじに しています…'
-  if (phase === 'extracting') hint = 'ないようを かくにん しています…'
+  let hint = 'ご用件をお話しください'
+  if (phase === 'starting') hint = '少々お待ちください'
+  if (phase === 'transcribing') hint = '音声を文字に変換しています…'
+  if (phase === 'extracting') hint = '内容を確認しています…'
 
   return (
     <div className="voice-record-screen">
       {phase === 'error' ? (
         <div className="voice-record-screen__message">
           <h1 className="voice-record-screen__title">{errorText}</h1>
-          <p className="voice-record-screen__caption">もう いちど おねがいします</p>
+          <p className="voice-record-screen__caption">もう一度お試しください</p>
         </div>
       ) : (
         <div className="voice-record-screen__message">
@@ -160,16 +160,16 @@ export function VoiceRecordScreen({ onRecognized, onCancel }: VoiceRecordScreenP
                 type="button"
                 className="voice-stop-button tap-feedback"
                 onClick={handleStop}
-                aria-label="おわったら ボタンを おしてください"
+                aria-label="お話が終わったらボタンを押してください"
               >
                 <StopIcon size={44} />
               </button>
-              <p className="voice-record-screen__caption">おわったら ボタンを おしてください</p>
+              <p className="voice-record-screen__caption">お話が終わったらボタンを押してください</p>
             </>
           )}
 
           <button type="button" className="voice-abort-button tap-feedback" onClick={handleAbort}>
-            やめる
+            中止する
           </button>
         </div>
       )}

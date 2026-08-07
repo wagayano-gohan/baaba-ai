@@ -21,25 +21,26 @@
 
 .pin-screen__back {
   align-self: flex-start;
-  font-size: 17px;
+  min-height: 44px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-accent);
 }
 
 .pin-screen__heading {
   margin: 0;
-  font-size: 26px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 600;
   color: var(--color-text);
   line-height: 1.5;
 }
 
 .pin-screen__lead {
   margin: 0;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 400;
   color: var(--color-label);
-  line-height: 1.7;
+  line-height: 1.8;
 }
 
 .pin-screen__section {
@@ -70,8 +71,8 @@
 }
 
 .pin-screen__label {
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--color-text);
   line-height: 1.5;
 }
@@ -85,13 +86,14 @@
   letter-spacing: 0.24em;
   color: var(--color-text);
   background: var(--color-bg);
-  border: 2px solid var(--color-border);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
 
 .pin-screen__input:focus {
   outline: none;
   border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-tint);
 }
 
 .pin-screen__input:disabled {
@@ -100,10 +102,10 @@
 
 .pin-screen__note {
   margin: 0;
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 400;
   color: var(--color-label);
-  line-height: 1.7;
+  line-height: 1.8;
 }
 
 .pin-screen__error {
@@ -111,16 +113,16 @@
   padding: 14px 16px;
   background: var(--color-alert-tint);
   border-radius: var(--radius-sm);
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--color-alert);
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .pin-screen__success {
   margin: 0;
-  font-size: 22px;
-  font-weight: 700;
+  font-size: 20px;
+  font-weight: 600;
   color: var(--color-success);
   line-height: 1.6;
 }
@@ -133,11 +135,11 @@
 
 .pin-screen__button {
   width: 100%;
-  min-height: 68px;
+  min-height: 62px;
   padding: 0 16px;
   border-radius: var(--radius);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 600;
   line-height: 1.5;
 }
 
@@ -160,8 +162,8 @@
   align-self: center;
   min-height: 48px;
   padding: 0 8px;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 500;
   color: var(--color-accent);
   text-decoration: underline;
 }

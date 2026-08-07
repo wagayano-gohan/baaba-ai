@@ -1,5 +1,5 @@
 /* Phase2 ③AI基盤: AIチャット画面
-   高齢者が読みやすいよう、文字は大きめ・行間広め・押しやすいボタンにする。 */
+   読みやすさは文字を大きめにし、行間・余白・コントラストで確保する。 */
 
 .chat-screen {
   flex: 1;
@@ -22,8 +22,8 @@
 
 .chat-screen__title {
   margin: 0;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 600;
   color: var(--color-text);
 }
 
@@ -34,7 +34,7 @@
   background: var(--color-accent-tint);
   color: var(--color-accent-dark);
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .chat-screen__header-button:disabled {
@@ -56,10 +56,10 @@
 }
 
 .chat-screen__guide {
-  margin: 24px 8px;
+  margin: 32px 8px;
   font-size: 17px;
-  font-weight: 600;
-  line-height: 1.7;
+  font-weight: 500;
+  line-height: 1.8;
   color: var(--color-label);
   white-space: pre-line;
   text-align: center;
@@ -87,15 +87,15 @@
 
 .chat-bubble__speaker {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   opacity: 0.75;
 }
 
 .chat-bubble__text {
   margin: 0;
   font-size: 18px;
-  font-weight: 500;
-  line-height: 1.75;
+  font-weight: 400;
+  line-height: 1.8;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -127,7 +127,7 @@
 
 .chat-bubble--error .chat-bubble__text {
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   text-align: center;
 }
 
@@ -170,12 +170,13 @@
 .chat-screen__send {
   flex-shrink: 0;
   min-height: 60px;
-  padding: 0 18px;
+  padding: 0 20px;
   border-radius: var(--radius-pill);
   background: var(--color-accent);
   color: #ffffff;
   font-size: 17px;
-  font-weight: 700;
+  font-weight: 600;
+  white-space: nowrap;
   box-shadow: var(--shadow-float);
 }
 

@@ -1,5 +1,5 @@
 // 本人(principal)端末のセットアップ画面。
-// この端末を「おばあちゃんが使う端末」として登録し、デバイストークンをlocalStorageへ保存する。
+// この端末を「ご本人が使う端末」として登録し、デバイストークンをlocalStorageへ保存する。
 //
 // 手段は2つある：
 //  (A) owner_adminとしてこの端末でログインし、register-device Edge Functionを直接呼んで登録する
@@ -35,10 +35,10 @@ interface RegisterDeviceResponse {
 function toJapaneseRegisterMessage(error: unknown): string {
   if (error instanceof ApiCallError) {
     if (error.code === 'PIN_REQUIRED') {
-      return '管理者PINの確認が必要です。管理者PINを入力してから、もう一度登録してください'
+      return '管理者PINの確認が必要です。管理者PINを入力してから再度登録してください'
     }
     if (error.code === 'PIN_NOT_SET') {
-      return '管理者PINがまだ設定されていません。さきに管理者PINを設定してください'
+      return '管理者PINが未設定です。先に管理者PINを設定してください'
     }
     if (error.code === 'UNAUTHENTICATED') {
       return 'ログインが必要です。ご家族のアカウントでログインしてください'
@@ -90,7 +90,7 @@ export function DeviceSetupScreen({ onDone, onBack, onNeedPinVerify }: DeviceSet
     setPinRequired(false)
 
     if (!effectiveProfileId) {
-      setRegisterError('登録先の家族（プロフィール）を選択してください')
+      setRegisterError('登録先のご家族（プロフィール）を選択してください')
       return
     }
 
@@ -151,14 +151,14 @@ export function DeviceSetupScreen({ onDone, onBack, onNeedPinVerify }: DeviceSet
             戻る
           </button>
         )}
-        <h1 className="device-setup__heading">本人用端末の設定</h1>
+        <h1 className="device-setup__heading">ご本人用端末の設定</h1>
       </header>
 
       {configError && <p className="device-setup__alert">{configError}</p>}
 
       {deviceRegistered ? (
         <section className="device-setup__section device-setup__section--registered">
-          <p className="device-setup__registered-text">この端末は本人用として登録済みです</p>
+          <p className="device-setup__registered-text">この端末はご本人用として登録済みです</p>
           {deviceProfileId && (
             <p className="device-setup__registered-sub">プロフィールID: {deviceProfileId}</p>
           )}
@@ -169,7 +169,7 @@ export function DeviceSetupScreen({ onDone, onBack, onNeedPinVerify }: DeviceSet
                 className="device-setup__button device-setup__button--primary tap-feedback"
                 onClick={onDone}
               >
-                終わる
+                完了
               </button>
             )}
             <button
@@ -189,12 +189,12 @@ export function DeviceSetupScreen({ onDone, onBack, onNeedPinVerify }: DeviceSet
 
             <p className="device-setup__note">
               この操作には管理者PIN（数字4桁）の確認が必要です。
-              確認してから10分のあいだだけ登録できます。
+              確認から10分以内に登録を行ってください。
             </p>
 
             {!user && (
               <p className="device-setup__note">
-                この方法を使うには、ご家族の管理者アカウントでログインしてください。
+                この方法をご利用の場合は、ご家族の管理者アカウントでログインしてください。
               </p>
             )}
 
@@ -202,14 +202,14 @@ export function DeviceSetupScreen({ onDone, onBack, onNeedPinVerify }: DeviceSet
 
             {user && !membershipsLoading && ownerAdminMemberships.length === 0 && (
               <p className="device-setup__note">
-                管理者（owner_admin）権限のある家族がありません。管理者アカウントでログインし直してください。
+                管理者（owner_admin）権限を持つご家族が登録されていません。管理者アカウントでログインし直してください。
               </p>
             )}
 
             {user && ownerAdminMemberships.length > 0 && (
               <form className="device-setup__form" onSubmit={handleRegister}>
                 <label className="device-setup__field">
-                  <span className="device-setup__label">どの家族の端末にしますか</span>
+                  <span className="device-setup__label">対象のご家族を選択してください</span>
                   <select
                     className="device-setup__input"
                     value={effectiveProfileId}
@@ -231,7 +231,7 @@ export function DeviceSetupScreen({ onDone, onBack, onNeedPinVerify }: DeviceSet
                     type="text"
                     value={deviceName}
                     onChange={(e) => setDeviceName(e.target.value)}
-                    placeholder="例: ばーばのスマホ"
+                    placeholder="例：リビングのスマートフォン"
                     disabled={registering}
                   />
                 </label>
@@ -261,7 +261,7 @@ export function DeviceSetupScreen({ onDone, onBack, onNeedPinVerify }: DeviceSet
                   className="device-setup__button device-setup__button--primary tap-feedback"
                   disabled={registering || Boolean(configError)}
                 >
-                  {registering ? '登録しています…' : 'この端末を本人用として登録する'}
+                  {registering ? '登録しています…' : 'この端末をご本人用として登録する'}
                 </button>
               </form>
             )}
@@ -271,7 +271,7 @@ export function DeviceSetupScreen({ onDone, onBack, onNeedPinVerify }: DeviceSet
           <section className="device-setup__section">
             <h2 className="device-setup__section-title">発行済みのトークンを入力する</h2>
             <p className="device-setup__note">
-              別の端末で登録したときに表示されたデバイストークンとプロフィールIDを貼り付けてください。
+              別の端末で登録した際に表示されたデバイストークンとプロフィールIDを貼り付けてください。
             </p>
 
             <form className="device-setup__form" onSubmit={handleManualSave}>

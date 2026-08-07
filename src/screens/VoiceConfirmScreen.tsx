@@ -10,24 +10,24 @@ interface VoiceConfirmScreenProps {
   transcript: string
   /** 「はい」で確認を送り終えたときに呼ばれる。 */
   onDone: () => void
-  /** 「ちがう」「もう一度」で録音をやり直すときに呼ばれる。 */
+  /** 「いいえ、修正する」「もう一度やり直す」で録音をやり直すときに呼ばれる。 */
   onRetry: () => void
 }
 
 type Phase = 'idle' | 'sending' | 'accepted' | 'failed'
 
-/** 「よてい」「やること」のどちらか、利用者が選んだ種別。未選択はnull。 */
+/** 「予定」「やること」のどちらか、利用者が選んだ種別。未選択はnull。 */
 type ChosenIntent = 'create_event' | 'create_task'
 
 // 予定なのかやることなのか判別できなかったとき、サーバーは intent='ambiguous' を返す。
-// この場合は勝手に決めつけず、利用者に「よてい」「やること」を選んでもらう。
+// この場合は勝手に決めつけず、利用者に「予定」「やること」を選んでもらう。
 const AMBIGUOUS_INTENT: VoiceIntent = 'ambiguous'
 
-const WEEKDAY_LABELS = ['にち', 'げつ', 'か', 'すい', 'もく', 'きん', 'ど']
+const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
 
-/** 'YYYY-MM-DD' を「8月5日（すい）」形式にする。解釈できない場合はそのまま返す。 */
+/** 'YYYY-MM-DD' を「8月5日（水）」形式にする。解釈できない場合はそのまま返す。 */
 function formatDateLabel(date: string | null): string {
-  if (!date) return 'ひづけは きいていません'
+  if (!date) return '日付の指定はありません'
   const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date)
   if (!matched) return date
   const year = Number(matched[1])
@@ -39,16 +39,16 @@ function formatDateLabel(date: string | null): string {
 }
 
 function formatTimeLabel(time: string | null): string {
-  if (!time) return 'じかんは きいていません'
+  if (!time) return '時刻の指定はありません'
   const matched = /^(\d{1,2}):(\d{2})$/.exec(time)
   if (!matched) return time
   return `${Number(matched[1])}時${matched[2]}分`
 }
 
 function intentLabel(intent: VoiceIntentResult['intent'] | ChosenIntent): string {
-  if (intent === 'create_event') return 'よてい'
+  if (intent === 'create_event') return '予定'
   if (intent === 'create_task') return 'やること'
-  return 'ふめい'
+  return '種別未確定'
 }
 
 /**
@@ -82,7 +82,7 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
 
   const effectiveIntent: VoiceIntentResult['intent'] | ChosenIntent = chosenIntent ?? result.intent
   const isUnknown = effectiveIntent === 'unknown' || !result.title
-  // 種別が決まっていないため、まず「よてい」「やること」を選んでもらう段階。
+  // 種別が決まっていないため、まず「予定」「やること」を選んでもらう段階。
   const needsIntentChoice = !isUnknown && effectiveIntent === AMBIGUOUS_INTENT
 
   const handleYes = useCallback(() => {
@@ -106,7 +106,7 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
           return
         }
         console.error('[VoiceConfirmScreen] 確認の送信に失敗しました:', error)
-        setErrorText('うまく つたえられませんでした')
+        setErrorText('確認内容を送信できませんでした')
         setPhase('failed')
       }
     })()
@@ -133,14 +133,14 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
     <div className="voice-confirm-screen">
       <h1 className="voice-confirm-screen__heading">
         {isUnknown
-          ? 'かくにん できませんでした'
+          ? '内容を確認できませんでした'
           : needsIntentChoice
-            ? 'どちらに しますか？'
-            : 'これで よろしいですか？'}
+            ? 'どちらに登録しますか？'
+            : 'この内容でよろしいですか？'}
       </h1>
 
-      <section className="voice-confirm-transcript" aria-label="ききとった ことば">
-        <p className="voice-confirm-transcript__label">ききとった ことば</p>
+      <section className="voice-confirm-transcript" aria-label="認識した内容">
+        <p className="voice-confirm-transcript__label">認識した内容</p>
         <p className="voice-confirm-transcript__text">{transcript}</p>
       </section>
 
@@ -166,21 +166,21 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
 
       <div className="voice-confirm-screen__actions">
         {phase === 'failed' ? (
-          // 送信は1回きりのため「はい」を押し直させない。やり直すか、いったん終わるかを選ばせる。
+          // 送信は1回きりのため「はい、登録する」を押し直させない。やり直すか、終了するかを選ばせる。
           <>
             <button
               type="button"
               className="voice-confirm-button voice-confirm-button--primary tap-feedback"
               onClick={onRetry}
             >
-              もう いちど
+              もう一度やり直す
             </button>
             <button
               type="button"
               className="voice-confirm-button voice-confirm-button--secondary tap-feedback"
               onClick={onDone}
             >
-              おわる
+              終了する
             </button>
           </>
         ) : isUnknown ? (
@@ -189,7 +189,7 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
             className="voice-confirm-button voice-confirm-button--primary tap-feedback"
             onClick={onRetry}
           >
-            もう いちど
+            もう一度やり直す
           </button>
         ) : needsIntentChoice ? (
           // 種別を選ぶだけの段階。ここではサーバーへ何も送らず、選択後に通常の確認カードへ移る。
@@ -199,14 +199,14 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
               className="voice-confirm-button voice-confirm-button--primary tap-feedback"
               onClick={() => setChosenIntent('create_event')}
             >
-              よてい
+              予定として登録
             </button>
             <button
               type="button"
               className="voice-confirm-button voice-confirm-button--secondary tap-feedback"
               onClick={() => setChosenIntent('create_task')}
             >
-              やること
+              やることとして登録
             </button>
           </>
         ) : (
@@ -217,7 +217,7 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
               onClick={handleYes}
               disabled={phase !== 'idle'}
             >
-              はい
+              はい、登録する
             </button>
             <button
               type="button"
@@ -225,7 +225,7 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
               onClick={handleNo}
               disabled={phase !== 'idle'}
             >
-              ちがう
+              いいえ、修正する
             </button>
           </>
         )}
@@ -233,7 +233,7 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
 
       {phase === 'accepted' && (
         <div className="voice-confirm-overlay">
-          <p className="voice-confirm-overlay__text">わかりました</p>
+          <p className="voice-confirm-overlay__text">承知しました</p>
         </div>
       )}
     </div>

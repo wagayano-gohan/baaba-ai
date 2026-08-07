@@ -9,9 +9,9 @@ import type { ChatMessage } from './conversation'
 
 const CHAT_FUNCTION_NAME = 'ai-chat'
 
-const NETWORK_ERROR_MESSAGE = 'つながりませんでした。もう一度おためしください'
-const SERVER_ERROR_MESSAGE = 'うまくお答えできませんでした。もう一度おためしください'
-const EMPTY_ANSWER_MESSAGE = 'お返事をうまく受け取れませんでした。もう一度おためしください'
+const NETWORK_ERROR_MESSAGE = 'サーバーに接続できませんでした。通信環境をご確認のうえ、もう一度お試しください'
+const SERVER_ERROR_MESSAGE = '回答を取得できませんでした。もう一度お試しください'
+const EMPTY_ANSWER_MESSAGE = '回答を受け取れませんでした。もう一度お試しください'
 
 interface ChatResponseData {
   text?: string

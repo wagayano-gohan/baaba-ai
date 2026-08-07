@@ -12,12 +12,16 @@ import { buildSystemPrompt } from '../lib/chat/systemPrompt'
 import './ChatScreen.css'
 
 interface ChatScreenProps {
-  /** 指定されたときだけ「もどる」ボタンを表示する。 */
+  /** 指定されたときだけ「戻る」ボタンを表示する。 */
   onBack?: () => void
 }
 
-const THINKING_LABEL = 'かんがえています…'
-const EMPTY_GUIDE = 'ききたいことを かいて、\n「おくる」を おしてください。'
+/** 応答待ちのあいだ、AI側の吹き出しに表示する文言。 */
+const THINKING_LABEL = '回答を作成しています…'
+/** 送信ボタンのラベル（送信中は押せないことが分かる表記に切り替える）。 */
+const SENDING_LABEL = '送信中…'
+const INPUT_PLACEHOLDER = '相談したい内容を入力してください'
+const EMPTY_GUIDE = '相談したい内容を入力してください'
 
 // Phase2 ③AI基盤: AIチャット画面（テキスト入力のみ。音声入力との連携はPhase2では行わない）
 export function ChatScreen({ onBack }: ChatScreenProps) {
@@ -59,7 +63,7 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
       setErrorText(
         error instanceof Error && error.message
           ? error.message
-          : 'うまくお答えできませんでした。もう一度おためしください',
+          : '回答を取得できませんでした。もう一度お試しください',
       )
     } finally {
       setIsSending(false)
@@ -79,19 +83,19 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
       <header className="chat-screen__header">
         {onBack ? (
           <button type="button" className="chat-screen__header-button tap-feedback" onClick={onBack}>
-            もどる
+            戻る
           </button>
         ) : (
           <span className="chat-screen__header-spacer" />
         )}
-        <h1 className="chat-screen__title">おはなし</h1>
+        <h1 className="chat-screen__title">AIに相談</h1>
         <button
           type="button"
           className="chat-screen__header-button tap-feedback"
           onClick={handleReset}
           disabled={isSending || messages.length === 0}
         >
-          はじめから
+          最初から
         </button>
       </header>
 
@@ -135,10 +139,10 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
           className="chat-screen__input"
           value={input}
           onChange={(event) => setInput(event.target.value)}
-          placeholder="ここに かいてください"
+          placeholder={INPUT_PLACEHOLDER}
           rows={2}
           disabled={isSending}
-          aria-label="ききたいことを かいてください"
+          aria-label={INPUT_PLACEHOLDER}
         />
         <button
           type="button"
@@ -146,7 +150,7 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
           onClick={handleSend}
           disabled={isSending || input.trim() === ''}
         >
-          {isSending ? THINKING_LABEL : 'おくる'}
+          {isSending ? SENDING_LABEL : '送信'}
         </button>
       </div>
     </div>
