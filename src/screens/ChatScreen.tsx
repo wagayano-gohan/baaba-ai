@@ -9,6 +9,7 @@ import {
 } from '../lib/chat/conversation'
 import type { ChatMessage } from '../lib/chat/conversation'
 import { buildSystemPrompt } from '../lib/chat/systemPrompt'
+import { useAuth } from '../contexts/AuthContext'
 import './ChatScreen.css'
 
 interface ChatScreenProps {
@@ -25,6 +26,11 @@ const EMPTY_GUIDE = '相談したい内容を入力してください'
 
 // Phase2 ③AI基盤: AIチャット画面（テキスト入力のみ。音声入力との連携はPhase2では行わない）
 export function ChatScreen({ onBack }: ChatScreenProps) {
+  // 「近くの病院」等を検索できるよう、選択中プロフィールの氏名・住所をAIへ渡す。
+  // 住所が未登録の場合はnullのままで、AI側が必要に応じて場所を尋ねる。
+  const { memberships, activeProfileId } = useAuth()
+  const activeProfile = memberships.find((m) => m.profileId === activeProfileId) ?? null
+
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isSending, setIsSending] = useState(false)
@@ -54,7 +60,13 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
     setIsSending(true)
 
     try {
-      const answer = await sendChatMessage(nextHistory, buildSystemPrompt())
+      const answer = await sendChatMessage(
+        nextHistory,
+        buildSystemPrompt({
+          profileName: activeProfile?.profileName ?? null,
+          address: activeProfile?.profileAddress ?? null,
+        }),
+      )
       const withAnswer = appendMessage(nextHistory, createChatMessage('assistant', answer))
       setMessages(withAnswer)
       saveHistory(withAnswer)
@@ -68,7 +80,7 @@ export function ChatScreen({ onBack }: ChatScreenProps) {
     } finally {
       setIsSending(false)
     }
-  }, [input, isSending, messages])
+  }, [input, isSending, messages, activeProfile])
 
   const handleReset = useCallback(() => {
     if (isSending) return

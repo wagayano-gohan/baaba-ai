@@ -78,6 +78,36 @@ async function isAuthorized(req: Request): Promise<boolean> {
   return false
 }
 
+/**
+ * Web検索の根拠となったURLを取り出す。
+ * Responses APIは本文中の該当箇所に annotations（url_citation）を付けて返すため、
+ * それを収集して重複を除いた一覧にする。
+ * 画面には表示しないが、「AIが何を根拠に答えたか」を後から検証できるようにレスポンスへ含める。
+ */
+function extractSources(json: unknown): { url: string; title: string }[] {
+  const body = json as { output?: unknown }
+  const output = Array.isArray(body?.output) ? body.output : []
+  const seen = new Set<string>()
+  const sources: { url: string; title: string }[] = []
+
+  for (const item of output) {
+    const contents = (item as { content?: unknown })?.content
+    if (!Array.isArray(contents)) continue
+    for (const content of contents) {
+      const annotations = (content as { annotations?: unknown })?.annotations
+      if (!Array.isArray(annotations)) continue
+      for (const annotation of annotations) {
+        const a = annotation as { type?: unknown; url?: unknown; title?: unknown }
+        if (a?.type !== 'url_citation' || typeof a.url !== 'string' || a.url === '') continue
+        if (seen.has(a.url)) continue
+        seen.add(a.url)
+        sources.push({ url: a.url, title: typeof a.title === 'string' ? a.title : '' })
+      }
+    }
+  }
+  return sources
+}
+
 /** Responses APIの出力からテキストを取り出す（output_textはSDK側の便宜プロパティのため両対応）。 */
 function extractOutputText(json: unknown): string {
   const body = json as { output_text?: unknown; output?: unknown }
@@ -142,6 +172,10 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model,
         input: [{ role: 'system', content: systemPrompt }, ...history],
+        // ばーばAIは「調べ方を教えるAI」ではなく「本人の代わりに調べて具体的な候補を出す
+        // 生活コンシェルジュ」である。病院・店舗・営業時間などは最新情報が必要で、
+        // モデルの学習データだけでは答えられないため、Web検索ツールを常時有効にする。
+        tools: [{ type: 'web_search' }],
       }),
     })
   } catch (error) {
@@ -155,12 +189,20 @@ Deno.serve(async (req) => {
   }
 
   let text = ''
+  let sources: { url: string; title: string }[] = []
   try {
-    text = extractOutputText(await res.json())
+    const json = await res.json()
+    text = extractOutputText(json)
+    sources = extractSources(json)
   } catch (error) {
     console.error('[ai-chat] OpenAIレスポンスの解析に失敗しました:', error)
     return jsonError(ErrorCode.EXTERNAL_API_ERROR, 'お返事を読み取れませんでした', 502)
   }
 
-  return jsonSuccess({ text })
+  // 検証用にサーバーログへも残す（画面には出さない）。新規テーブルは追加しない。
+  if (sources.length > 0) {
+    console.info('[ai-chat] sources:', JSON.stringify(sources))
+  }
+
+  return jsonSuccess({ text, sources })
 })

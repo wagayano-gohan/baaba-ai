@@ -12,6 +12,8 @@ export interface ProfileMembership {
   profileId: string
   role: MembershipRole
   profileName: string | null
+  /** profiles.address。「近くの〜」検索の基準地点に使う。未登録ならnull。 */
+  profileAddress: string | null
 }
 
 function ensureConfigured(): void {
@@ -37,7 +39,10 @@ interface MembershipRow {
   membership_id: string
   profile_id: string
   role: MembershipRole
-  profiles: { full_name: string } | { full_name: string }[] | null
+  profiles:
+    | { full_name: string; address: string | null }
+    | { full_name: string; address: string | null }[]
+    | null
 }
 
 /**
@@ -54,7 +59,7 @@ export async function fetchMyProfileMemberships(): Promise<ProfileMembership[]> 
 
   const { data, error } = await supabase
     .from('profile_memberships')
-    .select('membership_id, profile_id, role, profiles(full_name)')
+    .select('membership_id, profile_id, role, profiles(full_name, address)')
     .eq('auth_user_id', userData.user.id)
     .order('created_at', { ascending: true })
 
@@ -67,6 +72,7 @@ export async function fetchMyProfileMemberships(): Promise<ProfileMembership[]> 
       profileId: row.profile_id,
       role: row.role,
       profileName: profile?.full_name ?? null,
+      profileAddress: profile?.address ?? null,
     }
   })
 }
