@@ -7,6 +7,10 @@
 
 import { useEffect, useState } from 'react'
 import { MicIcon } from '../components/icons'
+import { useAuth } from '../contexts/AuthContext'
+import { fetchTodayEvents } from '../lib/events'
+import type { TodayEvent } from '../lib/events'
+import { getDeviceProfileId } from '../lib/deviceToken'
 import './HomeScreen.css'
 
 interface HomeScreenProps {
@@ -69,8 +73,17 @@ function greetingOf(hour: number): string {
   return 'こんばんは'
 }
 
+type ScheduleStatus = 'loading' | 'ready' | 'error'
+
 export function HomeScreen({ onGoVoice, onGoChat, onGoSettings }: HomeScreenProps) {
   const [now, setNow] = useState<JstNow>(() => getJstNow(new Date()))
+  const [events, setEvents] = useState<TodayEvent[]>([])
+  const [scheduleStatus, setScheduleStatus] = useState<ScheduleStatus>('loading')
+
+  // 家族アカウントでログイン中なら選択中のprofile、本人端末（デバイストークン）なら
+  // 端末に保存されたprofileを見る。どちらも無い場合は取得しない。
+  const { activeProfileId } = useAuth()
+  const profileId = activeProfileId ?? getDeviceProfileId()
 
   // 日付またぎや、あいさつが切り替わる時刻（10時・17時）をまたいでも
   // 画面を開き直さずに表示が正しくなるよう、1分ごとに更新する。
@@ -78,6 +91,36 @@ export function HomeScreen({ onGoVoice, onGoChat, onGoSettings }: HomeScreenProp
     const timer = window.setInterval(() => setNow(getJstNow(new Date())), 60_000)
     return () => window.clearInterval(timer)
   }, [])
+
+  // 今日の予定を読み込む。日付をまたいだときは対象日が変わるため読み直す。
+  const todayKey = `${now.month}/${now.day}`
+  useEffect(() => {
+    if (!profileId) {
+      setEvents([])
+      setScheduleStatus('ready')
+      return
+    }
+
+    let cancelled = false
+    setScheduleStatus('loading')
+
+    void fetchTodayEvents(profileId)
+      .then((rows) => {
+        if (cancelled) return
+        setEvents(rows)
+        setScheduleStatus('ready')
+      })
+      .catch((error: unknown) => {
+        if (cancelled) return
+        console.error('[HomeScreen] 今日の予定を取得できませんでした:', error)
+        setEvents([])
+        setScheduleStatus('error')
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [profileId, todayKey])
 
   const dateText = `${now.month}月${now.day}日（${WEEKDAY_KANJI[now.weekday]}）`
 
@@ -102,8 +145,22 @@ export function HomeScreen({ onGoVoice, onGoChat, onGoSettings }: HomeScreenProp
 
       <section className="home__schedule">
         <h2 className="home__schedule-title">今日の予定</h2>
-        {/* TODO: Phase3でeventsテーブルから取得 */}
-        <p className="home__schedule-empty">本日の予定はありません</p>
+        {scheduleStatus === 'loading' ? (
+          <p className="home__schedule-empty">読み込んでいます…</p>
+        ) : scheduleStatus === 'error' ? (
+          <p className="home__schedule-empty home__schedule-empty--error">予定を読み込めませんでした</p>
+        ) : events.length === 0 ? (
+          <p className="home__schedule-empty">本日の予定はありません</p>
+        ) : (
+          <ul className="home__schedule-list">
+            {events.map((event) => (
+              <li key={event.id} className="home__schedule-item">
+                <span className="home__schedule-time">{event.timeLabel}</span>
+                <span className="home__schedule-name">{event.title}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <button type="button" className="home__chat tap-feedback" onClick={onGoChat}>

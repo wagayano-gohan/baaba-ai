@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react'
-import { ApiCallError } from '../lib/apiClient'
+import { ApiCallError, callDeviceAuthedFunction } from '../lib/apiClient'
 import { confirmAction } from '../lib/voice/voicePipeline'
 import type { VoiceIntent, VoiceIntentResult } from '../lib/voice/voicePipeline'
 import './VoiceConfirmScreen.css'
@@ -64,20 +64,31 @@ function isAlreadyHandled(error: unknown): boolean {
   )
 }
 
-// Phase2 ②音声基盤の完了ライン。
-// ここでは voice_requests の確認結果（execute-confirmed-action）を送るのみで、
-// events/tasks等への実DB書き込みは行わない（Phase3スコープ）。
+/**
+ * 「はい」の送信先。execute-confirmed-action は events / tasks への書き込みまで行い、
+ * その成否を status（executed / failed）で返す。
+ * confirmAction（voicePipeline）は戻り値を返さないため、結果の出し分けが必要なここでは
+ * Edge Functionを直接呼ぶ。
+ */
+async function sendConfirmation(voiceRequestId: string): Promise<{ status?: string }> {
+  return callDeviceAuthedFunction<{ status?: string }>('execute-confirmed-action', {
+    voiceRequestId,
+    confirmed: true,
+  })
+}
+
 export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: VoiceConfirmScreenProps) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [errorText, setErrorText] = useState('')
+  // 実際にDBへ登録できたかどうか（execute-confirmed-action の status が 'executed'）。
+  const [saved, setSaved] = useState(false)
   // 同じvoiceRequestIdへ確認結果を二重送信しないためのガード。
   // execute-confirmed-action は 'received' 以外のステータスに対して 409
   // (VOICE_REQUEST_ALREADY_HANDLED) を返すため、送信失敗時に同じボタンを押し直させると
   // 必ず再失敗する。そのため「送信は1回だけ」とし、失敗時は先へ進む導線を出す。
   const sentRef = useRef(false)
   // intent='ambiguous' のときに利用者が選んだ種別。
-  // Phase2ではDB保存を行わないため、この選択は画面表示の切り替えにのみ使う
-  // （サーバーへは既存どおり confirmAction の true/false のみを送る）。
+  // サーバーへは既存どおり true/false のみを送るため、この選択は画面表示の切り替えにのみ使う。
   const [chosenIntent, setChosenIntent] = useState<ChosenIntent | null>(null)
 
   const effectiveIntent: VoiceIntentResult['intent'] | ChosenIntent = chosenIntent ?? result.intent
@@ -93,14 +104,23 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
 
     void (async () => {
       try {
-        // execute-confirmed-action は現状 status:'failed'(reason:'not_implemented') を返すが、
-        // 実書き込みがPhase3スコープであることによる想定内の結果のため、エラー扱いしない。
-        await confirmAction(result.voiceRequestId, true)
+        if (!result.voiceRequestId) {
+          // 送信先が無い＝登録先のリクエストが作られていない。登録できなかったこととして扱う。
+          setSaved(false)
+          setPhase('accepted')
+          window.setTimeout(() => onDone(), 1600)
+          return
+        }
+        // status: 'executed' なら events / tasks への登録まで完了している。
+        // 'failed'（種別が確定できない、書き込みに失敗した等）の場合は登録されていない。
+        const data = await sendConfirmation(result.voiceRequestId)
+        setSaved(data?.status === 'executed')
         setPhase('accepted')
         window.setTimeout(() => onDone(), 1600)
       } catch (error) {
-        // サーバー側で既に処理済みだった場合は、こちらの意図どおりに完了しているため正常扱いにする。
+        // サーバー側で既に処理済みだった場合は、先の送信で処理が終わっているため正常扱いにする。
         if (isAlreadyHandled(error)) {
+          setSaved(true)
           setPhase('accepted')
           window.setTimeout(() => onDone(), 1600)
           return
@@ -233,7 +253,7 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
 
       {phase === 'accepted' && (
         <div className="voice-confirm-overlay">
-          <p className="voice-confirm-overlay__text">承知しました</p>
+          <p className="voice-confirm-overlay__text">{saved ? '登録しました' : '登録できませんでした'}</p>
         </div>
       )}
     </div>

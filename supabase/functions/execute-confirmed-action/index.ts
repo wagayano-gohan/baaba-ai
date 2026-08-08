@@ -13,10 +13,57 @@ import { jsonError, jsonSuccess, ErrorCode } from '../_shared/errors.ts'
 import { getDeviceAuthContext } from '../_shared/auth.ts'
 import { createServiceRoleClient } from '../_shared/supabaseClient.ts'
 import { writeAuditLog } from '../_shared/audit.ts'
+import { jstDateToUtcIso, todayJstDateString } from '../_shared/datetime.ts'
 
 interface ExecuteConfirmedActionRequest {
   voiceRequestId: string
   confirmed: boolean
+}
+
+// process-voice-input が書き込む interpreted_payload の形。
+//   { payload: { title, date, time }, confirmationPrompt }
+interface InterpretedPayload {
+  payload?: { title?: unknown; date?: unknown; time?: unknown } | null
+  confirmationPrompt?: unknown
+}
+
+interface ExecutionResult {
+  executed: boolean
+  reason?: string
+  table?: string
+  recordId?: string
+}
+
+function asNullableString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null
+}
+
+/**
+ * JSTの日付(YYYY-MM-DD)・時刻(HH:MM)を、DB保存用のUTC ISO文字列へ変換する。
+ * 時刻がnullの場合は「時刻の指定なし」を表す 00:00 JST として扱う
+ * （events.starts_at / tasks.due_at は timestamptz のみで、時刻未指定を表す列が無いため）。
+ * 日付・時刻の形式が不正な場合はnullを返す。
+ */
+function jstDateTimeToUtcIso(date: string, time: string | null): string | null {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date)
+  if (!dateMatch) return null
+
+  let hour = 0
+  let minute = 0
+  if (time !== null) {
+    const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(time)
+    if (!timeMatch) return null
+    hour = Number(timeMatch[1])
+    minute = Number(timeMatch[2])
+    if (hour > 23 || minute > 59) return null
+  }
+
+  // Date.UTC でJSTの壁時計をいったんUTCとして組み立て、jstDateToUtcIso で9時間戻して実UTCにする。
+  const jstWallClock = new Date(
+    Date.UTC(Number(dateMatch[1]), Number(dateMatch[2]) - 1, Number(dateMatch[3]), hour, minute, 0, 0),
+  )
+  if (Number.isNaN(jstWallClock.getTime())) return null
+  return jstDateToUtcIso(jstWallClock)
 }
 
 Deno.serve(async (req) => {
@@ -75,16 +122,77 @@ Deno.serve(async (req) => {
   await supabase.from('voice_requests').update({ status: 'confirmed' }).eq('id', voiceRequest.id)
 
   // 6. アクション種別に応じた書き込み実行
-  // TODO: interpreted_intent / interpreted_payload に応じて実際のテーブル(tasks/events/contacts等)へ
-  //   書き込む処理を実装する。
-  //   例:
-  //     switch (voiceRequest.interpreted_intent) {
-  //       case 'create_task': ... insert into tasks ...
-  //       case 'create_event': ... insert into events ...
-  //       default: ... 未対応のアクション種別としてfailedに遷移 ...
-  //     }
-  const executionSucceeded = false // プレースホルダー。実装時に実処理の成否を反映する。
-  const executionResult = { executed: executionSucceeded, reason: 'not_implemented' }
+  //   - create_event … events へINSERT（starts_at は NOT NULL のため必ず値を作る）
+  //   - create_task  … tasks へINSERT（due_at は NULL許容のため日付が無ければnull）
+  //   - unknown / ambiguous … 何が正解か確定していないため書き込まず failed に遷移する
+  // category / status は実マイグレーションのCHECK制約付きデフォルト（events: 'other'/'active'、
+  // tasks: 'other'/'open'）に委ねるため、ここでは指定しない。
+  const interpreted = (voiceRequest.interpreted_payload ?? null) as InterpretedPayload | null
+  const payload = interpreted?.payload ?? null
+  const title = asNullableString(payload?.title)
+  const date = asNullableString(payload?.date)
+  const time = asNullableString(payload?.time)
+  const intent = voiceRequest.interpreted_intent as string | null
+
+  // 本人はSupabase Authアカウントを持たないため、記録者としてデバイス登録者(owner_admin)を残す。
+  const createdByAuthUserId = deviceAuth.registeredByAuthUserId ?? null
+
+  let executionResult: ExecutionResult = { executed: false, reason: 'unsupported_intent' }
+
+  if (intent !== 'create_event' && intent !== 'create_task') {
+    // unknown / ambiguous / 未設定。書き込まずにfailedへ。
+    executionResult = { executed: false, reason: 'unsupported_intent' }
+  } else if (!title) {
+    executionResult = { executed: false, reason: 'missing_title' }
+  } else if (intent === 'create_event') {
+    // 日付が読み取れなかった場合は、確認済みの内容を失わせないためJSTの今日として登録する。
+    const startsAt =
+      jstDateTimeToUtcIso(date ?? todayJstDateString(), time) ??
+      jstDateTimeToUtcIso(todayJstDateString(), null)
+
+    if (!startsAt) {
+      executionResult = { executed: false, reason: 'invalid_datetime' }
+    } else {
+      const { data: inserted, error: insertError } = await supabase
+        .from('events')
+        .insert({
+          profile_id: voiceRequest.profile_id,
+          title,
+          starts_at: startsAt,
+          created_by_auth_user_id: createdByAuthUserId,
+        })
+        .select('id')
+        .single()
+
+      executionResult =
+        insertError || !inserted
+          ? { executed: false, reason: 'insert_failed', table: 'events' }
+          : { executed: true, table: 'events', recordId: inserted.id as string }
+      if (insertError) console.error('[execute-confirmed-action] events insert failed:', insertError)
+    }
+  } else {
+    // create_task。due_at はNULL許容のため、日付が読み取れなければ期限なしとして登録する。
+    const dueAt = date ? jstDateTimeToUtcIso(date, time) : null
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('tasks')
+      .insert({
+        profile_id: voiceRequest.profile_id,
+        title,
+        due_at: dueAt,
+        created_by_auth_user_id: createdByAuthUserId,
+      })
+      .select('id')
+      .single()
+
+    executionResult =
+      insertError || !inserted
+        ? { executed: false, reason: 'insert_failed', table: 'tasks' }
+        : { executed: true, table: 'tasks', recordId: inserted.id as string }
+    if (insertError) console.error('[execute-confirmed-action] tasks insert failed:', insertError)
+  }
+
+  const executionSucceeded = executionResult.executed
 
   // 7. voice_requestsのステータスを最終状態(executed/failed)に更新
   const finalStatus = executionSucceeded ? 'executed' : 'failed'

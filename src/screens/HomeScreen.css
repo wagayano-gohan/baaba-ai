@@ -90,6 +90,43 @@
   line-height: 1.7;
 }
 
+.home__schedule-empty--error {
+  color: var(--color-alert);
+}
+
+/* 予定は「9:30　病院」のように、時刻を左に揃えて読みやすくする。 */
+.home__schedule-list {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.home__schedule-item {
+  display: flex;
+  align-items: baseline;
+  column-gap: 14px;
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.home__schedule-time {
+  flex: none;
+  min-width: 4.5em;
+  font-weight: 600;
+  color: var(--color-accent-dark);
+}
+
+.home__schedule-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
 .home__chat {
   margin-top: 20px;
   width: 100%;
