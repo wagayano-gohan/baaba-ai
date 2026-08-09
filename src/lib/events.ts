@@ -6,9 +6,11 @@
 // 時刻が未指定の予定は execute-confirmed-action が 00:00 JST として保存するため、
 // 表示では「時刻未定」と読み替える。
 
-import { isSupabaseConfigured, SUPABASE_NOT_CONFIGURED_MESSAGE, supabase } from './supabase'
-
-const JST_OFFSET_MS = 9 * 60 * 60 * 1000
+// 取得は get-today-events Edge Function 経由で行う。
+// events の SELECT RLS が `to authenticated` のため、Supabase Authアカウントを持たない
+// 本人(principal)端末からクライアント直接SELECTすると常に0件になり、
+// ご本人がホーム画面で自分の予定を見られないため。
+import { callFlexibleAuthedFunction } from './apiClient'
 
 export interface TodayEvent {
   id: string
@@ -19,31 +21,8 @@ export interface TodayEvent {
   timeLabel: string
 }
 
-interface EventRow {
-  id: string
-  title: string
-  starts_at: string
-}
-
-/** 端末のタイムゾーンに関わらず、日本時間での「今日」を YYYY-MM-DD で返す。 */
-function jstTodayDateString(base: Date): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Tokyo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(base)
-}
-
-/** JSTの今日 0:00 〜 翌日 0:00 を、UTCのISO文字列の範囲で返す。 */
-function jstTodayRange(base: Date): { fromUtcIso: string; toUtcIso: string } {
-  const [year, month, day] = jstTodayDateString(base).split('-').map(Number)
-  // Date.UTC でJSTの壁時計を組み立て、9時間戻して実UTCにする。
-  const startUtcMs = Date.UTC(year, month - 1, day, 0, 0, 0, 0) - JST_OFFSET_MS
-  return {
-    fromUtcIso: new Date(startUtcMs).toISOString(),
-    toUtcIso: new Date(startUtcMs + 24 * 60 * 60 * 1000).toISOString(),
-  }
+interface TodayEventsResponse {
+  events?: { id: string; title: string; startsAt: string }[]
 }
 
 /** UTCのISO文字列を、JSTの「9:30」形式にする。0:00は時刻未指定とみなす。 */
@@ -68,32 +47,20 @@ export function formatEventTimeLabel(startsAtUtcIso: string): string {
 }
 
 /**
- * 指定した家族(profile)の「今日（日本時間）」の予定を、開始時刻の早い順に取得する。
+ * 「今日（日本時間）」の予定を、開始時刻の早い順に取得する。
+ * 本人端末（デバイストークン）でも家族アカウント（JWT）でも動作する。
  * 取得に失敗した場合はエラーを投げる（呼び出し側で読み込み失敗として表示すること）。
  */
-export async function fetchTodayEvents(profileId: string, base: Date = new Date()): Promise<TodayEvent[]> {
-  if (!isSupabaseConfigured) {
-    throw new Error(SUPABASE_NOT_CONFIGURED_MESSAGE)
-  }
+export async function fetchTodayEvents(profileId: string | null): Promise<TodayEvent[]> {
+  const data = await callFlexibleAuthedFunction<TodayEventsResponse>('get-today-events', {
+    // 本人端末ではデバイストークンから対象profileが決まるため、送っても無視される。
+    profileId: profileId ?? undefined,
+  })
 
-  const { fromUtcIso, toUtcIso } = jstTodayRange(base)
-
-  const { data, error } = await supabase
-    .from('events')
-    .select('id, title, starts_at')
-    .eq('profile_id', profileId)
-    .is('deleted_at', null)
-    .neq('status', 'cancelled')
-    .gte('starts_at', fromUtcIso)
-    .lt('starts_at', toUtcIso)
-    .order('starts_at', { ascending: true })
-
-  if (error) throw new Error(error.message)
-
-  return ((data ?? []) as EventRow[]).map((row) => ({
-    id: row.id,
-    title: row.title,
-    startsAt: row.starts_at,
-    timeLabel: formatEventTimeLabel(row.starts_at),
+  return (data.events ?? []).map((event) => ({
+    id: event.id,
+    title: event.title,
+    startsAt: event.startsAt,
+    timeLabel: formatEventTimeLabel(event.startsAt),
   }))
 }

@@ -407,6 +407,9 @@ verify_jwt = false
 [functions.execute-confirmed-action]
 verify_jwt = false
 
+[functions.get-today-events]
+verify_jwt = false
+
 [functions.transcribe-audio]
 verify_jwt = false
 
