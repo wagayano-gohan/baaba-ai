@@ -1,0 +1,145 @@
+/* 買い物メモ画面のスタイル。
+   店先で見ることを想定し、品名を大きく、「買った」ボタンを押しやすい大きさで置く。 */
+
+.shopping-list {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-page);
+}
+
+.shopping-list__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.shopping-list__back {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  color: var(--color-accent-dark);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.shopping-list__title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.shopping-list__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 20px 32px;
+}
+
+.shopping-list__message {
+  margin: 24px 4px;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.7;
+  text-align: center;
+}
+
+.shopping-list__message--error {
+  color: var(--color-alert);
+}
+
+.shopping-list__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.shopping-list__retry {
+  min-height: 56px;
+  padding: 0 28px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-dark);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.shopping-list__notice {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  background: var(--color-alert-tint);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-alert);
+  line-height: 1.6;
+}
+
+.shopping-list__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shopping-list__item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 16px 16px 20px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+.shopping-list__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shopping-list__name {
+  font-size: 21px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.shopping-list__due {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-label);
+  line-height: 1.5;
+}
+
+.shopping-list__done {
+  flex: none;
+  min-width: 96px;
+  min-height: 56px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.shopping-list__done:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

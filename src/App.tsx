@@ -17,6 +17,9 @@ import { PinResetScreen } from './screens/PinResetScreen'
 import { VoiceRecordScreen } from './screens/VoiceRecordScreen'
 import { VoiceConfirmScreen } from './screens/VoiceConfirmScreen'
 import { ChatScreen } from './screens/ChatScreen'
+import { EventListScreen } from './screens/EventListScreen'
+import { TaskListScreen } from './screens/TaskListScreen'
+import { ShoppingListScreen } from './screens/ShoppingListScreen'
 import type { VoiceIntentResult } from './lib/voice/voicePipeline'
 
 // PIN確認（PinVerifyScreen）は「メニューから明示的に確認する」場合と
@@ -33,6 +36,9 @@ type Screen =
   | { name: 'voiceRecord' }
   | { name: 'voiceConfirm'; result: VoiceIntentResult; transcript: string }
   | { name: 'chat' }
+  | { name: 'eventList' }
+  | { name: 'taskList' }
+  | { name: 'shoppingList' }
 
 // 起動直後のローディング／設定不備表示は画面遷移を伴わない一時表示のため、
 // 専用のCSSファイルを増やさずインラインスタイルで最小限に表示する。
@@ -67,6 +73,10 @@ function App() {
   const goDeviceSetup = useCallback(() => setScreen({ name: 'deviceSetup' }), [])
   const goVoiceRecord = useCallback(() => setScreen({ name: 'voiceRecord' }), [])
   const goChat = useCallback(() => setScreen({ name: 'chat' }), [])
+  // 予定一覧・やること・買い物メモは設定メニューから入り、「戻る」でメニューへ戻る。
+  const goEventList = useCallback(() => setScreen({ name: 'eventList' }), [])
+  const goTaskList = useCallback(() => setScreen({ name: 'taskList' }), [])
+  const goShoppingList = useCallback(() => setScreen({ name: 'shoppingList' }), [])
   const goPinSetup = useCallback(() => setScreen({ name: 'pinSetup' }), [])
   const goPinReset = useCallback(() => setScreen({ name: 'pinReset' }), [])
   const goPinVerifyFromMenu = useCallback(() => setScreen({ name: 'pinVerify', origin: 'menu' }), [])
@@ -169,12 +179,21 @@ function App() {
     )
   } else if (screen.name === 'chat') {
     content = <ChatScreen onBack={goHome} />
+  } else if (screen.name === 'eventList') {
+    content = <EventListScreen onBack={goMenu} />
+  } else if (screen.name === 'taskList') {
+    content = <TaskListScreen onBack={goMenu} />
+  } else if (screen.name === 'shoppingList') {
+    content = <ShoppingListScreen onBack={goMenu} />
   } else if (screen.name === 'menu') {
     content = (
       <Phase2MenuScreen
         onBack={goHome}
         onGoVoice={goVoiceRecord}
         onGoChat={goChat}
+        onGoEvents={goEventList}
+        onGoTasks={goTaskList}
+        onGoShopping={goShoppingList}
         onGoDeviceSetup={goDeviceSetup}
         onGoPinSetup={goPinSetup}
         onGoPinVerify={goPinVerifyFromMenu}

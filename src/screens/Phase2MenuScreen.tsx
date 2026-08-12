@@ -15,6 +15,12 @@ interface Phase2MenuScreenProps {
   onGoVoice: () => void
   /** 「AIに相談」を押したとき。 */
   onGoChat: () => void
+  /** 「予定を見る」を押したとき。 */
+  onGoEvents: () => void
+  /** 「やること」を押したとき。 */
+  onGoTasks: () => void
+  /** 「買い物メモ」を押したとき。 */
+  onGoShopping: () => void
   /** 「本人端末の設定」を押したとき。 */
   onGoDeviceSetup: () => void
   /** 「管理者PINを設定する」を押したとき。owner_adminのときだけ表示される。 */
@@ -34,6 +40,9 @@ export function Phase2MenuScreen({
   onBack,
   onGoVoice,
   onGoChat,
+  onGoEvents,
+  onGoTasks,
+  onGoShopping,
   onGoDeviceSetup,
   onGoPinSetup,
   onGoPinVerify,
@@ -97,6 +106,30 @@ export function Phase2MenuScreen({
           onClick={onGoChat}
         >
           AIに相談
+        </button>
+
+        <button
+          type="button"
+          className="phase2-menu__button phase2-menu__button--secondary tap-feedback"
+          onClick={onGoEvents}
+        >
+          予定を見る
+        </button>
+
+        <button
+          type="button"
+          className="phase2-menu__button phase2-menu__button--secondary tap-feedback"
+          onClick={onGoTasks}
+        >
+          やること
+        </button>
+
+        <button
+          type="button"
+          className="phase2-menu__button phase2-menu__button--secondary tap-feedback"
+          onClick={onGoShopping}
+        >
+          買い物メモ
         </button>
 
         <button
