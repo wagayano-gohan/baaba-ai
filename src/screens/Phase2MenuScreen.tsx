@@ -1,8 +1,9 @@
-// Phase2の動作確認用メニュー画面。
+// 設定メニュー画面。
 //
-// これはPhase3で作る「ホーム画面」ではない。Phase2で実装した3基盤
-// （①認証 ②音声 ③AIチャット）を人手で動作確認するための、最小限の入口である。
-// 予定/ToDo/薬/荷物/写真/地図/天気などのPhase3以降の要素は一切含まない。
+// ホーム画面下部の「設定」から入る、ご家族・管理者向けの入口。
+// ご本人が日常的に使う機能（お薬・荷物・予定・買い物メモなど）はすべてホーム画面に
+// 置いてあるため、ここには重複して置かない。ここに置くのは
+// 「ご家族の管理画面」「本人端末の設定」「管理者PIN」「ログイン情報」の4つに絞る。
 
 import { useCallback, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
@@ -15,12 +16,8 @@ interface Phase2MenuScreenProps {
   onGoVoice: () => void
   /** 「AIに相談」を押したとき。 */
   onGoChat: () => void
-  /** 「予定を見る」を押したとき。 */
-  onGoEvents: () => void
-  /** 「やること」を押したとき。 */
-  onGoTasks: () => void
-  /** 「買い物メモ」を押したとき。 */
-  onGoShopping: () => void
+  /** 「ご家族の管理画面」を押したとき。家族アカウントでログイン中のみ渡される。 */
+  onGoFamily?: () => void
   /** 「本人端末の設定」を押したとき。 */
   onGoDeviceSetup: () => void
   /** 「管理者PINを設定する」を押したとき。owner_adminのときだけ表示される。 */
@@ -40,9 +37,7 @@ export function Phase2MenuScreen({
   onBack,
   onGoVoice,
   onGoChat,
-  onGoEvents,
-  onGoTasks,
-  onGoShopping,
+  onGoFamily,
   onGoDeviceSetup,
   onGoPinSetup,
   onGoPinVerify,
@@ -108,29 +103,15 @@ export function Phase2MenuScreen({
           AIに相談
         </button>
 
-        <button
-          type="button"
-          className="phase2-menu__button phase2-menu__button--secondary tap-feedback"
-          onClick={onGoEvents}
-        >
-          予定を見る
-        </button>
-
-        <button
-          type="button"
-          className="phase2-menu__button phase2-menu__button--secondary tap-feedback"
-          onClick={onGoTasks}
-        >
-          やること
-        </button>
-
-        <button
-          type="button"
-          className="phase2-menu__button phase2-menu__button--secondary tap-feedback"
-          onClick={onGoShopping}
-        >
-          買い物メモ
-        </button>
+        {onGoFamily && (
+          <button
+            type="button"
+            className="phase2-menu__button phase2-menu__button--secondary tap-feedback"
+            onClick={onGoFamily}
+          >
+            ご家族の管理画面
+          </button>
+        )}
 
         <button
           type="button"

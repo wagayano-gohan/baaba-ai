@@ -1,0 +1,489 @@
+/* ご家族（管理者）の管理画面のスタイル。
+   利用者は現役世代のご家族なので、ご本人向け画面のような巨大な文字は使わない。
+   本文16px前後・タップ領域48px前後を基準にしつつ、入力項目が多いぶん行間と区切りを広くとる。 */
+
+.family {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-page);
+}
+
+.family__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.family__back {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  color: var(--color-accent-dark);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.family__title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.family__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 16px 32px;
+}
+
+.family__message {
+  margin: 24px 4px;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.7;
+  text-align: center;
+}
+
+.family__message--error {
+  color: var(--color-alert);
+}
+
+.family__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.family__retry {
+  min-height: 48px;
+  padding: 0 24px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-dark);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* 権限が足りない場合の説明。閲覧はできるので、警告色より落ち着いた見せ方にする。 */
+.family__permission {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  background: var(--color-neutral-bg);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-label);
+  line-height: 1.7;
+}
+
+/* --- 開閉セクション ----------------------------------------------------- */
+
+.family__section {
+  margin-bottom: 12px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.family__section-heading {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.family__section-toggle {
+  width: 100%;
+  min-height: 56px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+}
+
+.family__section-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.family__section-mark {
+  flex: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-accent-dark);
+  line-height: 1.5;
+}
+
+.family__section-body {
+  padding: 4px 16px 20px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* --- 一覧 --------------------------------------------------------------- */
+
+.family__list {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.family__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--color-page);
+  border-radius: var(--radius-sm);
+}
+
+.family__item-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.family__item-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.family__item-sub {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-label);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.family__badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-tint);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-accent-dark);
+  line-height: 1.6;
+}
+
+.family__empty {
+  margin: 16px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-label);
+  line-height: 1.7;
+}
+
+.family__hint {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-sublabel);
+  line-height: 1.7;
+}
+
+.family__notice {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  background: var(--color-alert-tint);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-alert);
+  line-height: 1.6;
+}
+
+.family__saved {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  background: var(--color-success-tint);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-success);
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* --- 削除と確認 --------------------------------------------------------- */
+
+.family__delete {
+  flex: none;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--color-neutral-bg);
+  color: var(--color-danger);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.family__delete:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.family__confirm {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.family__confirm-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-danger);
+  line-height: 1.5;
+}
+
+.family__confirm-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.family__confirm-yes {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--color-danger);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.family__confirm-no {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  background: var(--color-neutral-bg);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.family__confirm-yes:disabled,
+.family__confirm-no:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* --- 追加フォーム ------------------------------------------------------- */
+
+.family__form {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.family__form-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-label);
+  line-height: 1.5;
+}
+
+.family__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* 日付と時刻など、関連の深い2項目を横に並べる。狭い画面では自然に折り返す。 */
+.family__field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.family__field-row .family__field {
+  flex: 1 1 140px;
+}
+
+.family__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.family__input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: 16px;
+  color: var(--color-text);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.family__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-tint);
+}
+
+.family__input:disabled {
+  opacity: 0.6;
+}
+
+.family__fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.family__checks {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.family__check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.family__check input {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--color-accent);
+}
+
+.family__submit {
+  width: 100%;
+  min-height: 52px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.family__submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.family__sub-button {
+  align-self: flex-start;
+  min-height: 48px;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-dark);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.family__sub-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* --- 地名の検索結果 ----------------------------------------------------- */
+
+.family__geo-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.family__geo-item {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  background: var(--color-page);
+  border: 1px solid var(--color-border);
+}
+
+.family__geo-item:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.family__geo-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.family__geo-detail {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-label);
+  line-height: 1.5;
+}
+
+/* --- ゴミの日 ----------------------------------------------------------- */
+
+.family__garbage-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.family__garbage-day {
+  flex: none;
+  width: 56px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+}

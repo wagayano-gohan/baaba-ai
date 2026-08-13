@@ -1,8 +1,8 @@
-// Phase2アプリシェル。
+// ばーばAIのアプリシェル。
 //
-// Phase2で実装した3基盤（①認証 ②音声 ③AIチャット）を1つのSPAとして配線する。
 // 画面遷移はルーターライブラリを使わず、useStateによる単純な判別ユニオンで管理する。
-// ホーム画面や予定/ToDo等のPhase3以降の画面はここには存在しない。
+// ご本人はホーム画面を起点にすべての機能へ移動する。ご家族向けの管理・設定は
+// ホーム下部の「設定」から入るメニューにまとめ、ご本人が誤って触らないようにする。
 
 import { useCallback, useState } from 'react'
 import type { CSSProperties } from 'react'
@@ -10,6 +10,7 @@ import { useAuth } from './contexts/AuthContext'
 import { LoginScreen } from './screens/LoginScreen'
 import { DeviceSetupScreen } from './screens/DeviceSetupScreen'
 import { HomeScreen } from './screens/HomeScreen'
+import type { HomeTarget } from './screens/HomeScreen'
 import { Phase2MenuScreen } from './screens/Phase2MenuScreen'
 import { PinSetupScreen } from './screens/PinSetupScreen'
 import { PinVerifyScreen } from './screens/PinVerifyScreen'
@@ -20,6 +21,14 @@ import { ChatScreen } from './screens/ChatScreen'
 import { EventListScreen } from './screens/EventListScreen'
 import { TaskListScreen } from './screens/TaskListScreen'
 import { ShoppingListScreen } from './screens/ShoppingListScreen'
+import { MedicationScreen } from './screens/MedicationScreen'
+import { DeliveryScreen } from './screens/DeliveryScreen'
+import { GarbageScreen } from './screens/GarbageScreen'
+import { WeatherScreen } from './screens/WeatherScreen'
+import { PlacesScreen } from './screens/PlacesScreen'
+import { ContactsScreen } from './screens/ContactsScreen'
+import { NotesScreen } from './screens/NotesScreen'
+import { FamilyScreen } from './screens/FamilyScreen'
 import type { VoiceIntentResult } from './lib/voice/voicePipeline'
 
 // PIN確認（PinVerifyScreen）は「メニューから明示的に確認する」場合と
@@ -36,9 +45,8 @@ type Screen =
   | { name: 'voiceRecord' }
   | { name: 'voiceConfirm'; result: VoiceIntentResult; transcript: string }
   | { name: 'chat' }
-  | { name: 'eventList' }
-  | { name: 'taskList' }
-  | { name: 'shoppingList' }
+  | { name: 'family' }
+  | { name: HomeTarget }
 
 // 起動直後のローディング／設定不備表示は画面遷移を伴わない一時表示のため、
 // 専用のCSSファイルを増やさずインラインスタイルで最小限に表示する。
@@ -73,10 +81,9 @@ function App() {
   const goDeviceSetup = useCallback(() => setScreen({ name: 'deviceSetup' }), [])
   const goVoiceRecord = useCallback(() => setScreen({ name: 'voiceRecord' }), [])
   const goChat = useCallback(() => setScreen({ name: 'chat' }), [])
-  // 予定一覧・やること・買い物メモは設定メニューから入り、「戻る」でメニューへ戻る。
-  const goEventList = useCallback(() => setScreen({ name: 'eventList' }), [])
-  const goTaskList = useCallback(() => setScreen({ name: 'taskList' }), [])
-  const goShoppingList = useCallback(() => setScreen({ name: 'shoppingList' }), [])
+  const goFamily = useCallback(() => setScreen({ name: 'family' }), [])
+  // ホームの機能ボタンから各画面へ移動する。「戻る」はいずれもホームへ返す。
+  const goFeature = useCallback((target: HomeTarget) => setScreen({ name: target }), [])
   const goPinSetup = useCallback(() => setScreen({ name: 'pinSetup' }), [])
   const goPinReset = useCallback(() => setScreen({ name: 'pinReset' }), [])
   const goPinVerifyFromMenu = useCallback(() => setScreen({ name: 'pinVerify', origin: 'menu' }), [])
@@ -105,7 +112,7 @@ function App() {
   }, [])
 
   // 本人(principal)端末はメール・パスワードを使わない設計のため、
-  // デバイス登録済みの端末はログインなしでメニューを表示する。
+  // デバイス登録済みの端末はログインなしでホーム画面を表示する。
   const canUseApp = deviceRegistered || Boolean(user)
 
   // 管理者PIN関連の画面は、家族アカウントでログイン中かつ、選択中の家族に対してowner_adminの
@@ -180,20 +187,35 @@ function App() {
   } else if (screen.name === 'chat') {
     content = <ChatScreen onBack={goHome} />
   } else if (screen.name === 'eventList') {
-    content = <EventListScreen onBack={goMenu} />
+    content = <EventListScreen onBack={goHome} />
   } else if (screen.name === 'taskList') {
-    content = <TaskListScreen onBack={goMenu} />
+    content = <TaskListScreen onBack={goHome} />
   } else if (screen.name === 'shoppingList') {
-    content = <ShoppingListScreen onBack={goMenu} />
+    content = <ShoppingListScreen onBack={goHome} />
+  } else if (screen.name === 'medication') {
+    content = <MedicationScreen onBack={goHome} />
+  } else if (screen.name === 'delivery') {
+    content = <DeliveryScreen onBack={goHome} />
+  } else if (screen.name === 'garbage') {
+    content = <GarbageScreen onBack={goHome} />
+  } else if (screen.name === 'weather') {
+    content = <WeatherScreen onBack={goHome} />
+  } else if (screen.name === 'places') {
+    content = <PlacesScreen onBack={goHome} />
+  } else if (screen.name === 'contacts') {
+    content = <ContactsScreen onBack={goHome} />
+  } else if (screen.name === 'notes') {
+    content = <NotesScreen onBack={goHome} />
+  } else if (screen.name === 'family' && Boolean(user)) {
+    // ご家族の管理画面は、家族アカウントでログインしているときだけ開ける。
+    content = <FamilyScreen onBack={goMenu} />
   } else if (screen.name === 'menu') {
     content = (
       <Phase2MenuScreen
         onBack={goHome}
         onGoVoice={goVoiceRecord}
         onGoChat={goChat}
-        onGoEvents={goEventList}
-        onGoTasks={goTaskList}
-        onGoShopping={goShoppingList}
+        onGoFamily={user ? goFamily : undefined}
         onGoDeviceSetup={goDeviceSetup}
         onGoPinSetup={goPinSetup}
         onGoPinVerify={goPinVerifyFromMenu}
@@ -201,7 +223,14 @@ function App() {
       />
     )
   } else {
-    content = <HomeScreen onGoVoice={goVoiceRecord} onGoChat={goChat} onGoSettings={goMenu} />
+    content = (
+      <HomeScreen
+        onGoVoice={goVoiceRecord}
+        onGoChat={goChat}
+        onGoSettings={goMenu}
+        onNavigate={goFeature}
+      />
+    )
   }
 
   return <div className="app-shell">{content}</div>

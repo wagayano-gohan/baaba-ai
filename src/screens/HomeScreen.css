@@ -39,10 +39,75 @@
   line-height: 1.45;
 }
 
+/* お知らせ。今すぐ必要な用件だけを、音声ボタンより上に置いて必ず目に入れる。 */
+.home__notices {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.home__notice {
+  padding: 18px 20px;
+  border-radius: var(--radius);
+  background: var(--tint-cream-bg);
+  border: 2px solid var(--tint-yellow-fg);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 飲み忘れなど、放置すると困るものは赤系にしてはっきり区別する。 */
+.home__notice--urgent {
+  background: var(--color-alert-tint);
+  border-color: var(--color-alert);
+}
+
+.home__notice-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.home__notice-title {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.home__notice--urgent .home__notice-title {
+  color: var(--color-alert);
+}
+
+.home__notice-detail {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: var(--color-label);
+  word-break: break-word;
+}
+
+.home__notice-action {
+  min-height: 60px;
+  padding: 0 20px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.home__notice-action:disabled {
+  opacity: 0.6;
+}
+
 /* 画面の主役。円形の大きなボタンで、押すべき場所を迷わせない。 */
 .home__voice {
   align-self: center;
-  margin-top: 36px;
+  margin-top: 32px;
   width: 200px;
   height: 200px;
   border-radius: 50%;
@@ -67,7 +132,7 @@
 }
 
 .home__schedule {
-  margin-top: 36px;
+  margin-top: 32px;
   padding: 20px 22px;
   background: var(--color-card);
   border-radius: var(--radius);
@@ -92,6 +157,17 @@
 
 .home__schedule-empty--error {
   color: var(--color-alert);
+}
+
+.home__schedule-retry {
+  margin-top: 12px;
+  min-height: 56px;
+  padding: 0 20px;
+  border-radius: var(--radius-sm);
+  background: var(--color-neutral-bg);
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 600;
 }
 
 /* 予定は「9:30　病院」のように、時刻を左に揃えて読みやすくする。 */
@@ -140,6 +216,55 @@
   font-size: 21px;
   font-weight: 600;
   line-height: 1.5;
+}
+
+/* その他の機能。2列に並べ、1つ1つを大きく取って押し間違いを防ぐ。 */
+.home__features {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.home__feature {
+  min-height: 84px;
+  padding: 0 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-text);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  box-shadow: var(--shadow-card);
+  word-break: break-word;
+}
+
+/* 色は「見分けるための目印」として使う。文字色は必ず十分な濃さを保つ。 */
+.home__feature--pink {
+  background: var(--tint-pink-bg);
+  border-color: var(--tint-pink-bg);
+  color: #8d2c48;
+}
+.home__feature--orange {
+  background: var(--tint-orange-bg);
+  border-color: var(--tint-orange-bg);
+  color: #8f4d1c;
+}
+.home__feature--green {
+  background: var(--tint-green-bg);
+  border-color: var(--tint-green-bg);
+  color: #22683a;
+}
+.home__feature--blue {
+  background: var(--tint-blue-bg);
+  border-color: var(--tint-blue-bg);
+  color: #2a5c8c;
+}
+.home__feature--yellow {
+  background: var(--tint-yellow-bg);
+  border-color: var(--tint-yellow-bg);
+  color: #8a6612;
 }
 
 /* 管理者向け。ご本人が誤って押さないよう、控えめに下端へ置く。 */

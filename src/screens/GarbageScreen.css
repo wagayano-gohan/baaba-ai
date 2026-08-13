@@ -1,0 +1,218 @@
+/* ゴミの日画面のスタイル。
+   上部の「今日」「明日」は一目で判断できるよう文字を大きくし、
+   収集がある日はアクセント色の面で塗って、無い日と区別できるようにする。
+   文字サイズ・タップ領域は既存画面の基準（本文18px以上・ボタン56px以上）に合わせる。 */
+
+.garbage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-page);
+}
+
+.garbage__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.garbage__back {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  color: var(--color-accent-dark);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.garbage__title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.garbage__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 20px 32px;
+}
+
+.garbage__message {
+  margin: 24px 4px;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.7;
+  text-align: center;
+}
+
+.garbage__message--error {
+  color: var(--color-alert);
+}
+
+.garbage__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.garbage__retry {
+  min-height: 56px;
+  padding: 0 28px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-dark);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* 未登録のとき。何をすればよいかが分かるよう、状況と次の行動を2行に分ける。 */
+.garbage__empty {
+  margin: 24px 0;
+  padding: 24px 20px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.garbage__empty-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.garbage__empty-note {
+  margin: 12px 0 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-label);
+  line-height: 1.7;
+}
+
+.garbage__today-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.garbage__card {
+  padding: 18px 20px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+/* 収集がある日は面で塗り、視線が最初にここへ向くようにする。 */
+.garbage__card--has {
+  background: var(--color-accent-tint);
+}
+
+.garbage__card-label {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-label);
+  line-height: 1.5;
+}
+
+.garbage__card-text {
+  margin: 8px 0 0;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.garbage__card--has .garbage__card-text {
+  color: var(--color-accent-dark);
+}
+
+.garbage__kind {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.garbage__week {
+  margin-top: 28px;
+}
+
+.garbage__week-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--color-label);
+  line-height: 1.5;
+}
+
+.garbage__items {
+  margin: 0;
+  padding: 8px 18px;
+  list-style: none;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+.garbage__item {
+  display: flex;
+  align-items: center;
+  column-gap: 16px;
+  /* 1行あたりの高さを確保し、指でなぞって読んでも行を見失わないようにする。 */
+  min-height: 56px;
+  font-size: 20px;
+  line-height: 1.6;
+}
+
+.garbage__item + .garbage__item {
+  border-top: 1px solid var(--color-border);
+}
+
+/* 今日の行だけ色と太さで強調する。 */
+.garbage__item--today .garbage__weekday {
+  background: var(--color-accent);
+  color: #ffffff;
+}
+
+.garbage__item--today .garbage__item-kind {
+  font-weight: 700;
+  color: var(--color-accent-dark);
+}
+
+.garbage__weekday {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--color-neutral-bg);
+  color: var(--color-text);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.garbage__item-kind {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+.garbage__item-kind--none {
+  color: var(--color-sublabel);
+}

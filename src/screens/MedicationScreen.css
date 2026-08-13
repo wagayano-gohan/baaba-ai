@@ -1,0 +1,263 @@
+/* お薬画面のスタイル。
+   今日ぶんは1件ずつカードにして「時刻・薬の名前・記録ボタン」を縦に並べ、
+   ボタンを横幅いっぱいにすることで押し間違いを防ぐ。
+   これからの予定は確認するだけなので、密度を上げて一覧性を優先する。 */
+
+.medication {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-page);
+}
+
+.medication__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 10px;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.medication__back {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  color: var(--color-accent-dark);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.medication__title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.medication__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 20px 32px;
+}
+
+.medication__message {
+  margin: 24px 4px;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.7;
+  text-align: center;
+}
+
+.medication__message--error {
+  color: var(--color-alert);
+}
+
+.medication__error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.medication__retry {
+  min-height: 56px;
+  padding: 0 28px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-dark);
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.medication__notice {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  background: var(--color-alert-tint);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-alert);
+  line-height: 1.6;
+}
+
+.medication__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.medication__empty-note {
+  margin: 0 4px;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-label);
+  line-height: 1.7;
+  text-align: center;
+}
+
+.medication__section + .medication__section {
+  margin-top: 28px;
+}
+
+.medication__section-title {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.5;
+}
+
+.medication__section-empty {
+  margin: 0;
+  padding: 18px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-label);
+  line-height: 1.6;
+}
+
+.medication__items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.medication__item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+/* 予定時刻を過ぎても記録が無い行は、枠と背景で気づけるようにする */
+.medication__item--overdue {
+  background: var(--color-alert-tint);
+  box-shadow: inset 0 0 0 2px var(--color-alert);
+}
+
+/* 済みの行は前面に出す必要がないので、控えめな見た目にする */
+.medication__item--taken {
+  background: var(--color-success-tint);
+  box-shadow: none;
+}
+
+.medication__line {
+  display: flex;
+  align-items: baseline;
+  column-gap: 14px;
+}
+
+.medication__time {
+  flex: none;
+  min-width: 3.6em;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--color-accent-dark);
+  line-height: 1.5;
+}
+
+.medication__item--overdue .medication__time {
+  color: var(--color-alert);
+}
+
+.medication__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.medication__name {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.medication__dosage {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-label);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.medication__overdue {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-alert);
+  line-height: 1.5;
+}
+
+.medication__taken {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-yes);
+  line-height: 1.5;
+}
+
+.medication__take {
+  width: 100%;
+  min-height: 60px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.medication__take:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.medication__group + .medication__group {
+  margin-top: 20px;
+}
+
+.medication__date {
+  margin: 0 0 10px;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--color-label);
+  line-height: 1.5;
+}
+
+.medication__plans {
+  margin: 0;
+  padding: 16px 18px;
+  list-style: none;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.medication__plan {
+  display: flex;
+  align-items: baseline;
+  column-gap: 14px;
+}
