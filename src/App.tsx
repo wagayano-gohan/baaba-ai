@@ -29,7 +29,7 @@ import { PlacesScreen } from './screens/PlacesScreen'
 import { ContactsScreen } from './screens/ContactsScreen'
 import { NotesScreen } from './screens/NotesScreen'
 import { FamilyScreen } from './screens/FamilyScreen'
-import type { VoiceIntentResult } from './lib/voice/voicePipeline'
+import type { VoiceFollowUp, VoiceIntentResult } from './lib/voice/voicePipeline'
 
 // PIN確認（PinVerifyScreen）は「メニューから明示的に確認する」場合と
 // 「本人端末の登録がPIN_REQUIREDで弾かれた場合」の両方から入るため、成功・戻り先を持たせる。
@@ -42,7 +42,8 @@ type Screen =
   | { name: 'pinSetup' }
   | { name: 'pinVerify'; origin: PinVerifyOrigin }
   | { name: 'pinReset' }
-  | { name: 'voiceRecord' }
+  // followUp を持つ場合は「聞き返しへの答え」を録る（前の発話を引き継ぐ）。
+  | { name: 'voiceRecord'; followUp?: VoiceFollowUp | null; question?: string | null }
   | { name: 'voiceConfirm'; result: VoiceIntentResult; transcript: string }
   | { name: 'chat' }
   | { name: 'family' }
@@ -94,6 +95,15 @@ function App() {
 
   const handleRecognized = useCallback((result: VoiceIntentResult, transcript: string) => {
     setScreen({ name: 'voiceConfirm', result, transcript })
+  }, [])
+
+  // 足りない情報の聞き返しに答えてもらう。前の発話と質問内容を録音画面へ引き継ぐ。
+  const handleAnswerQuestion = useCallback((followUp: VoiceFollowUp) => {
+    setScreen((current) => ({
+      name: 'voiceRecord',
+      followUp,
+      question: current.name === 'voiceConfirm' ? current.result.confirmationPrompt : null,
+    }))
   }, [])
 
   const openDeviceSetupFromLogin = useCallback(() => {
@@ -174,7 +184,14 @@ function App() {
   } else if (showPinScreen && screen.name === 'pinReset') {
     content = <PinResetScreen profileId={pinProfileId} onDone={goMenu} onBack={goMenu} />
   } else if (screen.name === 'voiceRecord') {
-    content = <VoiceRecordScreen onRecognized={handleRecognized} onCancel={goHome} />
+    content = (
+      <VoiceRecordScreen
+        onRecognized={handleRecognized}
+        onCancel={goHome}
+        followUp={screen.followUp ?? null}
+        question={screen.question ?? null}
+      />
+    )
   } else if (screen.name === 'voiceConfirm') {
     content = (
       <VoiceConfirmScreen
@@ -182,6 +199,7 @@ function App() {
         transcript={screen.transcript}
         onDone={goHome}
         onRetry={goVoiceRecord}
+        onAnswerQuestion={handleAnswerQuestion}
       />
     )
   } else if (screen.name === 'chat') {

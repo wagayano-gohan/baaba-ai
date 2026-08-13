@@ -1,7 +1,13 @@
+// 音声の応答画面。ご本人の発話に対する
+//   - confirm  … 「はい」で登録・記録する確認
+//   - question … 足りない情報を1つだけ聞き返す
+//   - answer   … その場でお答えするだけ（ゴミの日・予定・買うものなど）
+// の3つを扱う。いずれも結果は必ず文章で大きく表示する。
+
 import { useCallback, useRef, useState } from 'react'
 import { ApiCallError, callDeviceAuthedFunction } from '../lib/apiClient'
 import { confirmAction } from '../lib/voice/voicePipeline'
-import type { VoiceIntent, VoiceIntentResult } from '../lib/voice/voicePipeline'
+import type { VoiceFollowUp, VoiceIntent, VoiceIntentResult } from '../lib/voice/voicePipeline'
 import './VoiceConfirmScreen.css'
 
 interface VoiceConfirmScreenProps {
@@ -12,6 +18,8 @@ interface VoiceConfirmScreenProps {
   onDone: () => void
   /** 「いいえ、修正する」「もう一度やり直す」で録音をやり直すときに呼ばれる。 */
   onRetry: () => void
+  /** 聞き返しに答えてもらうため、前の発話を引き継いで録音へ戻るときに呼ばれる。 */
+  onAnswerQuestion: (followUp: VoiceFollowUp) => void
 }
 
 type Phase = 'idle' | 'sending' | 'accepted' | 'failed'
@@ -24,6 +32,9 @@ type ChosenIntent = 'create_event' | 'create_task'
 const AMBIGUOUS_INTENT: VoiceIntent = 'ambiguous'
 
 const WEEKDAY_LABELS = ['日', '月', '火', '水', '木', '金', '土']
+
+/** 日付・時刻を欄に分けて見せる意図（それ以外は確認文だけを大きく見せる）。 */
+const DATED_INTENTS: VoiceIntent[] = ['create_event', 'create_task', 'add_delivery', 'ambiguous']
 
 /** 'YYYY-MM-DD' を「8月5日（水）」形式にする。解釈できない場合はそのまま返す。 */
 function formatDateLabel(date: string | null): string {
@@ -45,10 +56,18 @@ function formatTimeLabel(time: string | null): string {
   return `${Number(matched[1])}時${matched[2]}分`
 }
 
-function intentLabel(intent: VoiceIntentResult['intent'] | ChosenIntent): string {
+function intentLabel(intent: VoiceIntent | ChosenIntent): string {
   if (intent === 'create_event') return '予定'
   if (intent === 'create_task') return 'やること'
-  return '種別未確定'
+  if (intent === 'add_shopping') return '買い物メモ'
+  if (intent === 'complete_task') return '完了の記録'
+  if (intent === 'take_medication') return 'お薬を飲んだ記録'
+  if (intent === 'add_medication') return 'お薬の登録'
+  if (intent === 'add_delivery') return '荷物'
+  if (intent === 'set_garbage') return 'ゴミの日'
+  if (intent === 'add_contact') return '電話番号'
+  if (intent === 'add_location') return 'よく行く場所'
+  return '確認'
 }
 
 /**
@@ -65,36 +84,41 @@ function isAlreadyHandled(error: unknown): boolean {
 }
 
 /**
- * 「はい」の送信先。execute-confirmed-action は events / tasks への書き込みまで行い、
+ * 「はい」の送信先。execute-confirmed-action は各テーブルへの書き込みまで行い、
  * その成否を status（executed / failed）で返す。
  * confirmAction（voicePipeline）は戻り値を返さないため、結果の出し分けが必要なここでは
  * Edge Functionを直接呼ぶ。
  */
-async function sendConfirmation(voiceRequestId: string): Promise<{ status?: string }> {
+async function sendConfirmation(voiceRequestId: string, intent?: string): Promise<{ status?: string }> {
   return callDeviceAuthedFunction<{ status?: string }>('execute-confirmed-action', {
     voiceRequestId,
     confirmed: true,
+    intent,
   })
 }
 
-export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: VoiceConfirmScreenProps) {
+export function VoiceConfirmScreen({
+  result,
+  transcript,
+  onDone,
+  onRetry,
+  onAnswerQuestion,
+}: VoiceConfirmScreenProps) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [errorText, setErrorText] = useState('')
   // 実際にDBへ登録できたかどうか（execute-confirmed-action の status が 'executed'）。
   const [saved, setSaved] = useState(false)
   // 同じvoiceRequestIdへ確認結果を二重送信しないためのガード。
-  // execute-confirmed-action は 'received' 以外のステータスに対して 409
-  // (VOICE_REQUEST_ALREADY_HANDLED) を返すため、送信失敗時に同じボタンを押し直させると
-  // 必ず再失敗する。そのため「送信は1回だけ」とし、失敗時は先へ進む導線を出す。
   const sentRef = useRef(false)
   // intent='ambiguous' のときに利用者が選んだ種別。
-  // サーバーへは既存どおり true/false のみを送るため、この選択は画面表示の切り替えにのみ使う。
   const [chosenIntent, setChosenIntent] = useState<ChosenIntent | null>(null)
 
-  const effectiveIntent: VoiceIntentResult['intent'] | ChosenIntent = chosenIntent ?? result.intent
-  const isUnknown = effectiveIntent === 'unknown' || !result.title
+  const effectiveIntent: VoiceIntent | ChosenIntent = chosenIntent ?? result.intent
+  const isAnswer = result.mode === 'answer'
+  const isQuestion = result.mode === 'question'
   // 種別が決まっていないため、まず「予定」「やること」を選んでもらう段階。
-  const needsIntentChoice = !isUnknown && effectiveIntent === AMBIGUOUS_INTENT
+  const needsIntentChoice = !isAnswer && !isQuestion && effectiveIntent === AMBIGUOUS_INTENT
+  const showDetail = DATED_INTENTS.includes(effectiveIntent as VoiceIntent)
 
   const handleYes = useCallback(() => {
     if (phase !== 'idle' || sentRef.current) return
@@ -111,9 +135,8 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
           window.setTimeout(() => onDone(), 1600)
           return
         }
-        // status: 'executed' なら events / tasks への登録まで完了している。
-        // 'failed'（種別が確定できない、書き込みに失敗した等）の場合は登録されていない。
-        const data = await sendConfirmation(result.voiceRequestId)
+        // status: 'executed' なら各テーブルへの登録まで完了している。
+        const data = await sendConfirmation(result.voiceRequestId, chosenIntent ?? undefined)
         setSaved(data?.status === 'executed')
         setPhase('accepted')
         window.setTimeout(() => onDone(), 1600)
@@ -130,7 +153,7 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
         setPhase('failed')
       }
     })()
-  }, [phase, result.voiceRequestId, onDone])
+  }, [phase, result.voiceRequestId, chosenIntent, onDone])
 
   const handleNo = useCallback(() => {
     if (phase !== 'idle' || sentRef.current) return
@@ -149,29 +172,39 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
     })()
   }, [phase, result.voiceRequestId, onRetry])
 
+  const handleAnswer = useCallback(() => {
+    onAnswerQuestion({ transcript, asked: result.asked })
+  }, [onAnswerQuestion, transcript, result.asked])
+
+  const heading = isAnswer
+    ? 'お答えします'
+    : isQuestion
+      ? 'もう少し教えてください'
+      : needsIntentChoice
+        ? 'どちらに登録しますか？'
+        : 'この内容でよろしいですか？'
+
   return (
     <div className="voice-confirm-screen">
-      <h1 className="voice-confirm-screen__heading">
-        {isUnknown
-          ? '内容を確認できませんでした'
-          : needsIntentChoice
-            ? 'どちらに登録しますか？'
-            : 'この内容でよろしいですか？'}
-      </h1>
+      <h1 className="voice-confirm-screen__heading">{heading}</h1>
 
       <section className="voice-confirm-transcript" aria-label="認識した内容">
         <p className="voice-confirm-transcript__label">認識した内容</p>
         <p className="voice-confirm-transcript__text">{transcript}</p>
       </section>
 
-      {isUnknown ? (
-        <div className="voice-confirm-card voice-confirm-card--unknown">
-          <p className="voice-confirm-card__prompt">{result.confirmationPrompt}</p>
-        </div>
-      ) : needsIntentChoice ? (
-        <div className="voice-confirm-card voice-confirm-card--choice">
-          <p className="voice-confirm-card__prompt">{result.confirmationPrompt}</p>
-          <p className="voice-confirm-card__content">{result.title}</p>
+      {isAnswer || isQuestion || needsIntentChoice || !showDetail ? (
+        <div
+          className={
+            'voice-confirm-card' + (isAnswer || isQuestion ? ' voice-confirm-card--unknown' : '')
+          }
+        >
+          {!isAnswer && !isQuestion && (
+            <p className="voice-confirm-card__kind">{intentLabel(effectiveIntent)}</p>
+          )}
+          <p className="voice-confirm-card__prompt" style={{ whiteSpace: 'pre-line' }}>
+            {result.confirmationPrompt}
+          </p>
         </div>
       ) : (
         <div className="voice-confirm-card">
@@ -203,14 +236,49 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
               終了する
             </button>
           </>
-        ) : isUnknown ? (
-          <button
-            type="button"
-            className="voice-confirm-button voice-confirm-button--primary tap-feedback"
-            onClick={onRetry}
-          >
-            もう一度やり直す
-          </button>
+        ) : isQuestion ? (
+          <>
+            <button
+              type="button"
+              className="voice-confirm-button voice-confirm-button--primary tap-feedback"
+              onClick={handleAnswer}
+            >
+              答える（話す）
+            </button>
+            <button
+              type="button"
+              className="voice-confirm-button voice-confirm-button--secondary tap-feedback"
+              onClick={onDone}
+            >
+              やめる
+            </button>
+          </>
+        ) : isAnswer ? (
+          <>
+            {result.phoneNumber && (
+              <a
+                className="voice-confirm-button voice-confirm-button--primary tap-feedback"
+                href={`tel:${result.phoneNumber}`}
+                style={{ textAlign: 'center', textDecoration: 'none' }}
+              >
+                電話をかける
+              </a>
+            )}
+            <button
+              type="button"
+              className="voice-confirm-button voice-confirm-button--secondary tap-feedback"
+              onClick={onRetry}
+            >
+              もう一度話す
+            </button>
+            <button
+              type="button"
+              className="voice-confirm-button voice-confirm-button--secondary tap-feedback"
+              onClick={onDone}
+            >
+              終わる
+            </button>
+          </>
         ) : needsIntentChoice ? (
           // 種別を選ぶだけの段階。ここではサーバーへ何も送らず、選択後に通常の確認カードへ移る。
           <>
@@ -237,7 +305,7 @@ export function VoiceConfirmScreen({ result, transcript, onDone, onRetry }: Voic
               onClick={handleYes}
               disabled={phase !== 'idle'}
             >
-              はい、登録する
+              はい、お願いします
             </button>
             <button
               type="button"

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { StopIcon } from '../components/icons'
 import { VoiceRecorder, VoiceRecorderError } from '../lib/voice/recorder'
-import { extractIntent, transcribeAudio } from '../lib/voice/voicePipeline'
-import type { VoiceIntentResult } from '../lib/voice/voicePipeline'
+import { extractIntent, mergeTranscript, transcribeAudio } from '../lib/voice/voicePipeline'
+import type { VoiceFollowUp, VoiceIntentResult } from '../lib/voice/voicePipeline'
 import './VoiceRecordScreen.css'
 
 interface VoiceRecordScreenProps {
@@ -10,6 +10,10 @@ interface VoiceRecordScreenProps {
   onRecognized: (result: VoiceIntentResult, transcript: string) => void
   /** マイク不可・文字起こし失敗などで、録音フローを中断するときに呼ばれる。 */
   onCancel: () => void
+  /** 聞き返しに答えてもらう場合、直前までの発話を引き継ぐ。 */
+  followUp?: VoiceFollowUp | null
+  /** 聞き返しの質問文（画面に出して、何を答えればよいかを分かるようにする）。 */
+  question?: string | null
 }
 
 type Phase = 'starting' | 'recording' | 'transcribing' | 'extracting' | 'error'
@@ -20,7 +24,12 @@ const RETURN_DELAY_MS = 2400
 
 // Phase2 ②音声基盤: 録音 → transcribe-audio（文字起こし）→ process-voice-input（意図解析）。
 // 実際のDB書き込みは行わず、結果は確認画面(VoiceConfirmScreen)へ渡す。
-export function VoiceRecordScreen({ onRecognized, onCancel }: VoiceRecordScreenProps) {
+export function VoiceRecordScreen({
+  onRecognized,
+  onCancel,
+  followUp = null,
+  question = null,
+}: VoiceRecordScreenProps) {
   const [phase, setPhase] = useState<Phase>('starting')
   const [errorText, setErrorText] = useState('')
 
@@ -88,10 +97,11 @@ export function VoiceRecordScreen({ onRecognized, onCancel }: VoiceRecordScreenP
         if (abandonedRef.current) return
 
         setPhase('extracting')
-        const result = await extractIntent(transcript)
+        // 聞き返しへの答えのときは、前の発話と合わせて解析する。
+        const result = await extractIntent(transcript, followUp)
         if (abandonedRef.current) return
 
-        onRecognized(result, transcript)
+        onRecognized(result, mergeTranscript(followUp, transcript))
       } catch (error) {
         // 中断後に届いた失敗はもう画面に出さない。
         if (abandonedRef.current) return
@@ -104,7 +114,7 @@ export function VoiceRecordScreen({ onRecognized, onCancel }: VoiceRecordScreenP
         setPhase('error')
       }
     })()
-  }, [onRecognized])
+  }, [onRecognized, followUp])
 
   // 録音中・処理中のどちらでも押せる中断導線。
   // 通信が返らないときでもユーザーが自分で画面から抜けられるようにする。
@@ -123,7 +133,8 @@ export function VoiceRecordScreen({ onRecognized, onCancel }: VoiceRecordScreenP
   if (phase === 'starting') title = '準備しています'
   if (isBusy) title = '処理しています'
 
-  let hint = 'ご用件をお話しください'
+  // 聞き返しに答えてもらう場合は、何を答えればよいかを画面に出し続ける。
+  let hint = question ?? 'ご用件をお話しください'
   if (phase === 'starting') hint = '少々お待ちください'
   if (phase === 'transcribing') hint = '音声を文字に変換しています…'
   if (phase === 'extracting') hint = '内容を確認しています…'

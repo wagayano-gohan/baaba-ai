@@ -648,10 +648,20 @@ export function FamilyScreen({ onBack }: FamilyScreenProps) {
         <button type="button" className="family__back tap-feedback" onClick={onBack}>
           ← 戻る
         </button>
-        <h1 className="family__title">ご家族の管理画面</h1>
+        <h1 className="family__title">ご家族の見守り画面</h1>
       </header>
 
       <div className="family__body">
+        {/*
+          この画面は「ご家族が全部入力する管理画面」ではない。
+          予定・やること・買い物・お薬の服用記録・荷物は、ご本人が話しかけるだけで登録できる。
+          ここは、その内容の確認・修正と、必要なときの代理入力・見守りのために使う。
+        */}
+        <p className="family__permission">
+          日々の予定・やること・買い物・お薬を飲んだ記録・荷物の受け取りは、ご本人が「話しかける」だけで登録できます。
+          この画面は、ご本人が登録した内容の確認・修正と、必要なときの代理入力・見守りのためにお使いください。
+        </p>
+
         {status === 'loading' && <p className="family__message">読み込んでいます…</p>}
 
         {status === 'error' && (

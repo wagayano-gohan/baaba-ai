@@ -7,6 +7,11 @@
 //     の遷移とする（'pending_confirmation'/'cancelled'は存在しない）。
 //   - interpreted_intent / interpreted_payload（parsed_actionは存在しない）。
 //   - handled_at カラムは存在しないため更新しない。
+//
+// 対応する意図（process-voice-input と対になる）:
+//   create_event / create_task / add_shopping / complete_task / take_medication /
+//   add_medication / add_delivery / set_garbage / add_contact / add_location
+//   ambiguous のときは、確認画面でご本人が選んだ種別を intent として受け取る。
 
 import { handlePreflight } from '../_shared/cors.ts'
 import { jsonError, jsonSuccess, ErrorCode } from '../_shared/errors.ts'
@@ -18,13 +23,15 @@ import { jstDateToUtcIso, todayJstDateString } from '../_shared/datetime.ts'
 interface ExecuteConfirmedActionRequest {
   voiceRequestId: string
   confirmed: boolean
+  /** intent='ambiguous' のとき、確認画面でご本人が選んだ種別。 */
+  intent?: string
 }
 
-// process-voice-input が書き込む interpreted_payload の形。
-//   { payload: { title, date, time }, confirmationPrompt }
+/** process-voice-input が書き込む interpreted_payload の形。 */
 interface InterpretedPayload {
-  payload?: { title?: unknown; date?: unknown; time?: unknown } | null
+  payload?: Record<string, unknown> | null
   confirmationPrompt?: unknown
+  mode?: unknown
 }
 
 interface ExecutionResult {
@@ -33,6 +40,12 @@ interface ExecutionResult {
   table?: string
   recordId?: string
 }
+
+/** ご本人が選べる種別（ambiguous のときだけ受け付ける）。 */
+const CHOOSABLE_INTENTS = ['create_event', 'create_task']
+
+/** お薬の予定を一度に作る最大日数。 */
+const MEDICATION_MAX_DAYS = 90
 
 function asNullableString(value: unknown): string | null {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : null
@@ -122,80 +135,245 @@ Deno.serve(async (req) => {
   await supabase.from('voice_requests').update({ status: 'confirmed' }).eq('id', voiceRequest.id)
 
   // 6. アクション種別に応じた書き込み実行
-  //   - create_event … events へINSERT（starts_at は NOT NULL のため必ず値を作る）
-  //   - create_task  … tasks へINSERT（due_at は NULL許容のため日付が無ければnull）
-  //   - unknown / ambiguous … 何が正解か確定していないため書き込まず failed に遷移する
-  // category / status は実マイグレーションのCHECK制約付きデフォルト（events: 'other'/'active'、
-  // tasks: 'other'/'open'）に委ねるため、ここでは指定しない。
   const interpreted = (voiceRequest.interpreted_payload ?? null) as InterpretedPayload | null
-  const payload = interpreted?.payload ?? null
-  const title = asNullableString(payload?.title)
-  const date = asNullableString(payload?.date)
-  const time = asNullableString(payload?.time)
-  const intent = voiceRequest.interpreted_intent as string | null
+  const payload = interpreted?.payload ?? {}
+  const title = asNullableString(payload.title)
+  const date = asNullableString(payload.date)
+  const time = asNullableString(payload.time)
+  const targetId = asNullableString(payload.targetId)
+  const profileId = voiceRequest.profile_id as string
+  const nowIso = new Date().toISOString()
+
+  // ambiguous（予定かやることか判別できなかった）のときだけ、画面での選択結果を採用する。
+  const storedIntent = voiceRequest.interpreted_intent as string | null
+  const intent =
+    storedIntent === 'ambiguous' && typeof body.intent === 'string' && CHOOSABLE_INTENTS.includes(body.intent)
+      ? body.intent
+      : storedIntent
 
   // 本人はSupabase Authアカウントを持たないため、記録者としてデバイス登録者(owner_admin)を残す。
   const createdByAuthUserId = deviceAuth.registeredByAuthUserId ?? null
 
-  let executionResult: ExecutionResult = { executed: false, reason: 'unsupported_intent' }
+  async function execute(): Promise<ExecutionResult> {
+    switch (intent) {
+      case 'create_event': {
+        if (!title) return { executed: false, reason: 'missing_title' }
+        // 日付が読み取れなかった場合は、確認済みの内容を失わせないためJSTの今日として登録する。
+        const startsAt =
+          jstDateTimeToUtcIso(date ?? todayJstDateString(), time) ??
+          jstDateTimeToUtcIso(todayJstDateString(), null)
+        if (!startsAt) return { executed: false, reason: 'invalid_datetime' }
 
-  if (intent !== 'create_event' && intent !== 'create_task') {
-    // unknown / ambiguous / 未設定。書き込まずにfailedへ。
-    executionResult = { executed: false, reason: 'unsupported_intent' }
-  } else if (!title) {
-    executionResult = { executed: false, reason: 'missing_title' }
-  } else if (intent === 'create_event') {
-    // 日付が読み取れなかった場合は、確認済みの内容を失わせないためJSTの今日として登録する。
-    const startsAt =
-      jstDateTimeToUtcIso(date ?? todayJstDateString(), time) ??
-      jstDateTimeToUtcIso(todayJstDateString(), null)
+        const { data, error } = await supabase
+          .from('events')
+          .insert({
+            profile_id: profileId,
+            title,
+            starts_at: startsAt,
+            created_by_auth_user_id: createdByAuthUserId,
+          })
+          .select('id')
+          .single()
+        if (error || !data) {
+          console.error('[execute-confirmed-action] events insert failed:', error)
+          return { executed: false, reason: 'insert_failed', table: 'events' }
+        }
+        return { executed: true, table: 'events', recordId: data.id as string }
+      }
 
-    if (!startsAt) {
-      executionResult = { executed: false, reason: 'invalid_datetime' }
-    } else {
-      const { data: inserted, error: insertError } = await supabase
-        .from('events')
-        .insert({
-          profile_id: voiceRequest.profile_id,
-          title,
-          starts_at: startsAt,
-          created_by_auth_user_id: createdByAuthUserId,
-        })
-        .select('id')
-        .single()
+      case 'create_task':
+      case 'add_shopping': {
+        if (!title) return { executed: false, reason: 'missing_title' }
+        // due_at はNULL許容のため、日付が読み取れなければ期限なしとして登録する。
+        const dueAt = date ? jstDateTimeToUtcIso(date, time) : null
+        const { data, error } = await supabase
+          .from('tasks')
+          .insert({
+            profile_id: profileId,
+            title,
+            category: intent === 'add_shopping' ? 'shopping' : 'other',
+            due_at: dueAt,
+            created_by_auth_user_id: createdByAuthUserId,
+          })
+          .select('id')
+          .single()
+        if (error || !data) {
+          console.error('[execute-confirmed-action] tasks insert failed:', error)
+          return { executed: false, reason: 'insert_failed', table: 'tasks' }
+        }
+        return { executed: true, table: 'tasks', recordId: data.id as string }
+      }
 
-      executionResult =
-        insertError || !inserted
-          ? { executed: false, reason: 'insert_failed', table: 'events' }
-          : { executed: true, table: 'events', recordId: inserted.id as string }
-      if (insertError) console.error('[execute-confirmed-action] events insert failed:', insertError)
+      case 'complete_task': {
+        if (!targetId) return { executed: false, reason: 'missing_target' }
+        const { data, error } = await supabase
+          .from('tasks')
+          .update({ status: 'done', completed_at: nowIso })
+          .eq('id', targetId)
+          .eq('profile_id', profileId)
+          .eq('status', 'open')
+          .is('deleted_at', null)
+          .select('id')
+          .maybeSingle()
+        if (error || !data) {
+          console.error('[execute-confirmed-action] tasks complete failed:', error)
+          return { executed: false, reason: error ? 'update_failed' : 'not_found', table: 'tasks' }
+        }
+        return { executed: true, table: 'tasks', recordId: data.id as string }
+      }
+
+      case 'take_medication': {
+        if (!targetId) return { executed: false, reason: 'missing_target' }
+        const { data, error } = await supabase
+          .from('medication_logs')
+          .update({ status: 'taken', taken_at: nowIso })
+          .eq('id', targetId)
+          .eq('profile_id', profileId)
+          .eq('status', 'scheduled')
+          .is('deleted_at', null)
+          .select('id')
+          .maybeSingle()
+        if (error || !data) {
+          console.error('[execute-confirmed-action] medication take failed:', error)
+          return {
+            executed: false,
+            reason: error ? 'update_failed' : 'not_found',
+            table: 'medication_logs',
+          }
+        }
+        return { executed: true, table: 'medication_logs', recordId: data.id as string }
+      }
+
+      case 'add_medication': {
+        if (!title || !time) return { executed: false, reason: 'missing_title' }
+        const daysValue = typeof payload.days === 'number' ? payload.days : 30
+        const days = Math.min(Math.max(Math.trunc(daysValue), 1), MEDICATION_MAX_DAYS)
+        const [year, month, day] = todayJstDateString().split('-').map(Number)
+        const [hour, minute] = time.split(':').map(Number)
+
+        const rows: Record<string, unknown>[] = []
+        for (let offset = 0; offset < days; offset++) {
+          const scheduledAt = jstDateToUtcIso(
+            new Date(Date.UTC(year, month - 1, day + offset, hour, minute, 0)),
+          )
+          // 今日ぶんで既に過ぎた時刻は作らない（登録直後に「飲み忘れ」が並ぶのを避ける）。
+          if (offset === 0 && scheduledAt < nowIso) continue
+          rows.push({
+            profile_id: profileId,
+            medication_name: title,
+            dosage: asNullableString(payload.dosage),
+            scheduled_at: scheduledAt,
+            status: 'scheduled',
+          })
+        }
+        if (rows.length === 0) return { executed: false, reason: 'no_schedule' }
+
+        const { error } = await supabase.from('medication_logs').insert(rows)
+        if (error) {
+          console.error('[execute-confirmed-action] medication insert failed:', error)
+          return { executed: false, reason: 'insert_failed', table: 'medication_logs' }
+        }
+        return { executed: true, table: 'medication_logs' }
+      }
+
+      case 'add_delivery': {
+        const itemName = title ?? '荷物'
+        const expectedAt = date ? jstDateTimeToUtcIso(date, time) : null
+        const { data, error } = await supabase
+          .from('deliveries')
+          .insert({ profile_id: profileId, item_name: itemName, expected_at: expectedAt })
+          .select('id')
+          .single()
+        if (error || !data) {
+          console.error('[execute-confirmed-action] deliveries insert failed:', error)
+          return { executed: false, reason: 'insert_failed', table: 'deliveries' }
+        }
+        return { executed: true, table: 'deliveries', recordId: data.id as string }
+      }
+
+      case 'set_garbage': {
+        const weekday = typeof payload.weekday === 'number' ? Math.trunc(payload.weekday) : null
+        if (!title || weekday === null || weekday < 0 || weekday > 6) {
+          return { executed: false, reason: 'missing_target' }
+        }
+        // profiles.memo にJSONで保持している設定へ、対象曜日だけを追記する。
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('memo')
+          .eq('id', profileId)
+          .maybeSingle()
+        let settings: Record<string, unknown> = {}
+        try {
+          const parsed = JSON.parse(typeof profile?.memo === 'string' ? profile.memo : '{}')
+          if (parsed && typeof parsed === 'object') settings = parsed as Record<string, unknown>
+        } catch {
+          settings = {}
+        }
+        const garbage: Record<string, string> = {}
+        const current = settings.garbage
+        if (current && typeof current === 'object') {
+          for (const key of ['0', '1', '2', '3', '4', '5', '6']) {
+            const value = (current as Record<string, unknown>)[key]
+            if (typeof value === 'string' && value.trim() !== '') garbage[key] = value.trim()
+          }
+        }
+        garbage[String(weekday)] = title.slice(0, 40)
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({ memo: JSON.stringify({ ...settings, garbage }) })
+          .eq('id', profileId)
+        if (error) {
+          console.error('[execute-confirmed-action] garbage save failed:', error)
+          return { executed: false, reason: 'update_failed', table: 'profiles' }
+        }
+        return { executed: true, table: 'profiles', recordId: profileId }
+      }
+
+      case 'add_contact': {
+        const phone = asNullableString(payload.phone)
+        if (!title || !phone) return { executed: false, reason: 'missing_target' }
+        const { data, error } = await supabase
+          .from('contacts')
+          .insert({ profile_id: profileId, name: title, phone_number: phone })
+          .select('id')
+          .single()
+        if (error || !data) {
+          console.error('[execute-confirmed-action] contacts insert failed:', error)
+          return { executed: false, reason: 'insert_failed', table: 'contacts' }
+        }
+        return { executed: true, table: 'contacts', recordId: data.id as string }
+      }
+
+      case 'add_location': {
+        if (!title) return { executed: false, reason: 'missing_title' }
+        const { data, error } = await supabase
+          .from('locations')
+          .insert({
+            profile_id: profileId,
+            name: title,
+            category: 'other',
+            address: asNullableString(payload.memo),
+          })
+          .select('id')
+          .single()
+        if (error || !data) {
+          console.error('[execute-confirmed-action] locations insert failed:', error)
+          return { executed: false, reason: 'insert_failed', table: 'locations' }
+        }
+        return { executed: true, table: 'locations', recordId: data.id as string }
+      }
+
+      default:
+        // unknown / 参照だけの意図など。書き込むものが無い。
+        return { executed: false, reason: 'unsupported_intent' }
     }
-  } else {
-    // create_task。due_at はNULL許容のため、日付が読み取れなければ期限なしとして登録する。
-    const dueAt = date ? jstDateTimeToUtcIso(date, time) : null
-
-    const { data: inserted, error: insertError } = await supabase
-      .from('tasks')
-      .insert({
-        profile_id: voiceRequest.profile_id,
-        title,
-        due_at: dueAt,
-        created_by_auth_user_id: createdByAuthUserId,
-      })
-      .select('id')
-      .single()
-
-    executionResult =
-      insertError || !inserted
-        ? { executed: false, reason: 'insert_failed', table: 'tasks' }
-        : { executed: true, table: 'tasks', recordId: inserted.id as string }
-    if (insertError) console.error('[execute-confirmed-action] tasks insert failed:', insertError)
   }
 
-  const executionSucceeded = executionResult.executed
+  const executionResult = await execute()
 
   // 7. voice_requestsのステータスを最終状態(executed/failed)に更新
-  const finalStatus = executionSucceeded ? 'executed' : 'failed'
+  const finalStatus = executionResult.executed ? 'executed' : 'failed'
   const { error: updateError } = await supabase
     .from('voice_requests')
     .update({ status: finalStatus })
@@ -207,14 +385,14 @@ Deno.serve(async (req) => {
 
   // 8. audit_logs記録（本人デバイスによる操作のためactorAuthUserIdはnull、actorDeviceIdを設定）
   await writeAuditLog(supabase, {
-    profileId: voiceRequest.profile_id as string,
+    profileId,
     actorAuthUserId: null,
     actorDeviceId: deviceAuth.deviceId,
     action: 'execute_confirmed_action',
     targetTable: 'voice_requests',
     targetId: voiceRequest.id as string,
     detail: {
-      interpretedIntent: voiceRequest.interpreted_intent,
+      interpretedIntent: intent,
       interpretedPayload: voiceRequest.interpreted_payload,
       executionResult,
     },

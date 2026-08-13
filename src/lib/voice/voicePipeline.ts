@@ -11,24 +11,61 @@ import { hasRegisteredDevice } from '../deviceToken'
 import { extensionForMimeType } from './recorder'
 
 /**
- * Phase2で扱う意図の種別。これ以外の意図は追加しない。
+ * 扱う意図の種別。サーバー（process-voice-input）の列挙と対応する。
  *   - ambiguous … 予定（create_event）かやること（create_task）か判別できない場合。
  *                 勝手に保存せず、confirmationPrompt でユーザーに聞き返す。
  *   - unknown   … そもそも意図が読み取れない場合。
  */
-export type VoiceIntent = 'create_event' | 'create_task' | 'ambiguous' | 'unknown'
+export type VoiceIntent =
+  | 'create_event'
+  | 'create_task'
+  | 'add_shopping'
+  | 'complete_task'
+  | 'take_medication'
+  | 'add_medication'
+  | 'add_delivery'
+  | 'set_garbage'
+  | 'add_contact'
+  | 'call_contact'
+  | 'add_location'
+  | 'query_schedule'
+  | 'query_shopping'
+  | 'query_garbage'
+  | 'query_medication'
+  | 'ambiguous'
+  | 'unknown'
+
+/**
+ * 応答の種類。
+ *   - confirm  … 「はい」で登録・記録する。
+ *   - question … 足りない情報を1つだけ聞き返している。続けて話してもらう。
+ *   - answer   … その場で答えるだけ（登録は伴わない）。
+ */
+export type VoiceMode = 'confirm' | 'question' | 'answer'
 
 export interface VoiceIntentResult {
   /** process-voice-input で採番される voice_requests のID。 */
   voiceRequestId: string | null
   intent: VoiceIntent
+  mode: VoiceMode
   title: string | null
   /** YYYY-MM-DD */
   date: string | null
   /** HH:MM（24時間表記） */
   time: string | null
-  /** 画面と読み上げで使う確認文言。 */
+  /** 画面と読み上げで使う確認・質問・回答の文言。 */
   confirmationPrompt: string
+  /** 電話をかける相手が特定できた場合の番号（call_contact）。 */
+  phoneNumber: string | null
+  /** 聞き返し済みの項目。次の発話と一緒に送り返す。 */
+  asked: string[]
+}
+
+/** 聞き返しに答えてもらうときに引き継ぐ内容。 */
+export interface VoiceFollowUp {
+  /** ここまでの発話（新しい発話と結合してもう一度解析する）。 */
+  transcript: string
+  asked: string[]
 }
 
 /** 文字起こし・意図解析の失敗を表すエラー。 */
@@ -46,8 +83,31 @@ export class VoicePipelineError extends Error {
 
 // --- 内部ユーティリティ -------------------------------------------------
 
+const INTENTS: VoiceIntent[] = [
+  'create_event',
+  'create_task',
+  'add_shopping',
+  'complete_task',
+  'take_medication',
+  'add_medication',
+  'add_delivery',
+  'set_garbage',
+  'add_contact',
+  'call_contact',
+  'add_location',
+  'query_schedule',
+  'query_shopping',
+  'query_garbage',
+  'query_medication',
+  'ambiguous',
+]
+
 function asIntent(value: unknown): VoiceIntent {
-  return value === 'create_event' || value === 'create_task' || value === 'ambiguous' ? value : 'unknown'
+  return INTENTS.includes(value as VoiceIntent) ? (value as VoiceIntent) : 'unknown'
+}
+
+function asMode(value: unknown): VoiceMode {
+  return value === 'confirm' || value === 'question' || value === 'answer' ? value : 'answer'
 }
 
 function asNullableString(value: unknown): string | null {
@@ -55,21 +115,10 @@ function asNullableString(value: unknown): string | null {
 }
 
 const UNKNOWN_PROMPT = '内容を確認できませんでした。もう一度お話しください。'
-const AMBIGUOUS_PROMPT = '予定として登録しますか？ やることとして登録しますか？'
 
-/** 確認文言が返らなかった場合に、抽出結果から組み立てる。 */
-function buildConfirmationPrompt(
-  intent: VoiceIntent,
-  title: string | null,
-  date: string | null,
-  time: string | null,
-): string {
-  if (intent === 'unknown' || !title) return UNKNOWN_PROMPT
-  // 予定かやることか判別できない場合は、勝手に保存せずユーザーへ聞き返す。
-  if (intent === 'ambiguous') return AMBIGUOUS_PROMPT
-  const kind = intent === 'create_event' ? '予定' : 'やること'
-  const when = [date ?? '', time ?? ''].filter((part) => part !== '').join(' ')
-  return when ? `${when} の ${title} を ${kind} に登録します。よろしいですか？` : `${title} を ${kind} に登録します。よろしいですか？`
+/** 聞き返しへの答えを、前の発話とつなげた1本のテキストにする。 */
+export function mergeTranscript(followUp: VoiceFollowUp | null | undefined, transcript: string): string {
+  return followUp ? `${followUp.transcript}\n${transcript}` : transcript
 }
 
 // 応答が返らないまま画面が固まるのを防ぐためのタイムアウト（ミリ秒）。
@@ -142,17 +191,23 @@ interface ProcessVoiceInputData {
   voiceRequestId: string
   interpretedIntent: string
   interpretedPayload: {
-    payload?: { title?: unknown; date?: unknown; time?: unknown } | null
+    payload?: Record<string, unknown> | null
     confirmationPrompt?: unknown
+    mode?: unknown
+    asked?: unknown
   } | null
 }
 
 /**
- * 文字起こしテキストから意図（種別・タイトル・日付・時刻）を抽出する。
+ * 文字起こしテキストから意図を抽出する。
+ * followUp を渡した場合は、前の発話と結合して解析し直す（聞き返しへの答えを反映するため）。
  * process-voice-input はデバイス認証必須（voice_requestsに本人端末起点として記録するため）なので、
  * デバイス未登録の端末では実行できず、その旨を明示したエラーにする。
  */
-export async function extractIntent(transcript: string): Promise<VoiceIntentResult> {
+export async function extractIntent(
+  transcript: string,
+  followUp?: VoiceFollowUp | null,
+): Promise<VoiceIntentResult> {
   if (!hasRegisteredDevice()) {
     throw new VoicePipelineError(
       'extract',
@@ -160,14 +215,23 @@ export async function extractIntent(transcript: string): Promise<VoiceIntentResu
       new ApiCallError('DEVICE_NOT_REGISTERED', 'この端末は本人用端末として登録されていません', 401),
     )
   }
-  return extractIntentViaEdgeFunction(transcript)
+  return extractIntentViaEdgeFunction(transcript, followUp ?? null)
 }
 
-async function extractIntentViaEdgeFunction(transcript: string): Promise<VoiceIntentResult> {
+async function extractIntentViaEdgeFunction(
+  transcript: string,
+  followUp: VoiceFollowUp | null,
+): Promise<VoiceIntentResult> {
+  // 聞き返しへの答えは、前の発話とつなげて解析する（会話の文脈を保つ最小の方法）。
+  const merged = mergeTranscript(followUp, transcript)
+
   let data: ProcessVoiceInputData
   try {
     data = await withTimeout(
-      callDeviceAuthedFunction<ProcessVoiceInputData>('process-voice-input', { transcript }),
+      callDeviceAuthedFunction<ProcessVoiceInputData>('process-voice-input', {
+        transcript: merged,
+        asked: followUp?.asked ?? [],
+      }),
       EXTRACT_TIMEOUT_MS,
     )
   } catch (error) {
@@ -178,20 +242,20 @@ async function extractIntentViaEdgeFunction(transcript: string): Promise<VoiceIn
     )
   }
 
-  const intent = asIntent(data.interpretedIntent)
   const payload = data.interpretedPayload?.payload ?? null
-  const title = asNullableString(payload?.title)
-  const date = asNullableString(payload?.date)
-  const time = asNullableString(payload?.time)
+  const rawAsked = data.interpretedPayload?.asked
   const prompt = asNullableString(data.interpretedPayload?.confirmationPrompt)
 
   return {
     voiceRequestId: data.voiceRequestId,
-    intent,
-    title,
-    date,
-    time,
-    confirmationPrompt: prompt ?? buildConfirmationPrompt(intent, title, date, time),
+    intent: asIntent(data.interpretedIntent),
+    mode: asMode(data.interpretedPayload?.mode),
+    title: asNullableString(payload?.title),
+    date: asNullableString(payload?.date),
+    time: asNullableString(payload?.time),
+    confirmationPrompt: prompt ?? UNKNOWN_PROMPT,
+    phoneNumber: asNullableString(payload?.phoneNumber),
+    asked: Array.isArray(rawAsked) ? rawAsked.filter((item): item is string => typeof item === 'string') : [],
   }
 }
 
@@ -200,17 +264,17 @@ async function extractIntentViaEdgeFunction(transcript: string): Promise<VoiceIn
 /**
  * ユーザーの「はい」「ちがう」を execute-confirmed-action へ送る。
  * voiceRequestId が null の場合は送信先が無いため何もしない。
- *
- * 注意: execute-confirmed-action は confirmed=true のとき、現状 { status: 'failed',
- * executionResult: { executed: false, reason: 'not_implemented' } } を返す。
- * events/tasks への実書き込みはPhase3スコープのため、これは想定内の正常な戻り値であり、
- * 呼び出し側はエラーとして扱わない。
+ * intent は、予定かやることか判別できなかった（ambiguous）ときに画面で選ばれた種別。
  */
-export async function confirmAction(voiceRequestId: string | null, confirmed: boolean): Promise<void> {
+export async function confirmAction(
+  voiceRequestId: string | null,
+  confirmed: boolean,
+  intent?: string,
+): Promise<void> {
   if (!voiceRequestId) return
 
   try {
-    await callDeviceAuthedFunction('execute-confirmed-action', { voiceRequestId, confirmed })
+    await callDeviceAuthedFunction('execute-confirmed-action', { voiceRequestId, confirmed, intent })
   } catch (error) {
     // 通信・認証エラーはVoicePipelineErrorに包んで呼び出し側（確認画面）へ渡す。
     console.error('[voicePipeline] execute-confirmed-action failed:', error)
