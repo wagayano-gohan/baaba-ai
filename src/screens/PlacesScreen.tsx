@@ -1,10 +1,11 @@
 // 地図・経路案内画面。
 //
-// 家族が登録した「よく行く場所」を一覧し、地図表示と経路案内をワンタップで開く。
+// ご本人が話しかけて覚えさせた「よく行く場所」を一覧し、地図表示と経路案内をワンタップで開く。
 // 経路の計算やルート表示はアプリ内では行わず、端末の地図アプリ（Googleマップ）に任せる。
 // 高齢のご本人が普段から使い慣れた地図アプリで見られるほうが迷いにくいためである。
 
 import { useCallback, useEffect, useState } from 'react'
+import { EmptyGuide } from '../components/EmptyGuide'
 import { useAuth } from '../contexts/AuthContext'
 import { getDeviceProfileId } from '../lib/deviceToken'
 import { buildDirectionsUrl, buildMapUrl, fetchLocations } from '../lib/data'
@@ -14,6 +15,8 @@ import './PlacesScreen.css'
 interface PlacesScreenProps {
   /** 「戻る」を押したとき。 */
   onBack: () => void
+  /** 空状態の「話しかける」を押したとき。 */
+  onGoVoice: () => void
 }
 
 type LoadStatus = 'loading' | 'ready' | 'error'
@@ -32,7 +35,7 @@ function categoryLabel(category: string): string {
   return CATEGORY_LABELS[category] ?? CATEGORY_LABELS.other
 }
 
-export function PlacesScreen({ onBack }: PlacesScreenProps) {
+export function PlacesScreen({ onBack, onGoVoice }: PlacesScreenProps) {
   const [locations, setLocations] = useState<LocationItem[]>([])
   const [status, setStatus] = useState<LoadStatus>('loading')
 
@@ -99,10 +102,11 @@ export function PlacesScreen({ onBack }: PlacesScreenProps) {
         )}
 
         {status === 'ready' && locations.length === 0 && (
-          <div className="places__empty">
-            <p className="places__message">よく行く場所はまだ登録されていません</p>
-            <p className="places__message places__message--sub">ご家族に登録してもらってください</p>
-          </div>
+          <EmptyGuide
+            title="よく行く場所はまだ覚えていません"
+            examples={['いつもの美容院は青葉美容室', 'かかりつけは立川病院']}
+            onAction={onGoVoice}
+          />
         )}
 
         {status === 'ready' && locations.length > 0 && (

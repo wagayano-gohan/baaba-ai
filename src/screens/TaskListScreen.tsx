@@ -5,6 +5,7 @@
 // 各行の「完了」を押すと完了として記録し、一覧から消す。
 
 import { useCallback, useEffect, useState } from 'react'
+import { EmptyGuide } from '../components/EmptyGuide'
 import { useAuth } from '../contexts/AuthContext'
 import { getDeviceProfileId } from '../lib/deviceToken'
 import { completeTask, fetchOpenTasks, formatDueLabel } from '../lib/schedule'
@@ -14,11 +15,13 @@ import './TaskListScreen.css'
 interface TaskListScreenProps {
   /** 「戻る」を押したとき。 */
   onBack: () => void
+  /** 空状態の「話しかける」を押したとき。 */
+  onGoVoice: () => void
 }
 
 type LoadStatus = 'loading' | 'ready' | 'error'
 
-export function TaskListScreen({ onBack }: TaskListScreenProps) {
+export function TaskListScreen({ onBack, onGoVoice }: TaskListScreenProps) {
   const [tasks, setTasks] = useState<TodoTask[]>([])
   const [status, setStatus] = useState<LoadStatus>('loading')
   // 完了処理中のタスクID。二重送信を防ぎ、ボタンを押せない状態にする。
@@ -107,7 +110,11 @@ export function TaskListScreen({ onBack }: TaskListScreenProps) {
         {status === 'ready' && completeError && <p className="task-list__notice">{completeError}</p>}
 
         {status === 'ready' && tasks.length === 0 && (
-          <p className="task-list__message">やることはありません</p>
+          <EmptyGuide
+            title="やることはありません"
+            examples={['明日、郵便局に行く', '電球を買いに行く']}
+            onAction={onGoVoice}
+          />
         )}
 
         {status === 'ready' && tasks.length > 0 && (

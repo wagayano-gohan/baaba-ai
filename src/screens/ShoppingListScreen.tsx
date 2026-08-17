@@ -5,6 +5,7 @@
 // 各行の「買った」を押すと完了として記録し、一覧から消す。
 
 import { useCallback, useEffect, useState } from 'react'
+import { EmptyGuide } from '../components/EmptyGuide'
 import { useAuth } from '../contexts/AuthContext'
 import { getDeviceProfileId } from '../lib/deviceToken'
 import { completeTask, fetchOpenTasks, formatDueLabel } from '../lib/schedule'
@@ -14,11 +15,13 @@ import './ShoppingListScreen.css'
 interface ShoppingListScreenProps {
   /** 「戻る」を押したとき。 */
   onBack: () => void
+  /** 空状態の「話しかける」を押したとき。 */
+  onGoVoice: () => void
 }
 
 type LoadStatus = 'loading' | 'ready' | 'error'
 
-export function ShoppingListScreen({ onBack }: ShoppingListScreenProps) {
+export function ShoppingListScreen({ onBack, onGoVoice }: ShoppingListScreenProps) {
   const [items, setItems] = useState<TodoTask[]>([])
   const [status, setStatus] = useState<LoadStatus>('loading')
   // 完了処理中のタスクID。二重送信を防ぎ、ボタンを押せない状態にする。
@@ -108,7 +111,11 @@ export function ShoppingListScreen({ onBack }: ShoppingListScreenProps) {
         )}
 
         {status === 'ready' && items.length === 0 && (
-          <p className="shopping-list__message">買うものはありません</p>
+          <EmptyGuide
+            title="買うものはありません"
+            examples={['牛乳買っといて', '卵と食パンを買う']}
+            onAction={onGoVoice}
+          />
         )}
 
         {status === 'ready' && items.length > 0 && (

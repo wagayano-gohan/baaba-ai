@@ -210,6 +210,15 @@
   word-break: break-word;
 }
 
+/* 予定が無いときに、次に何を話しかければよいかを一行で添える。 */
+.home__schedule-hint {
+  margin: 10px 0 0;
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--color-label);
+  line-height: 1.6;
+}
+
 .home__chat {
   margin-top: 20px;
   width: 100%;

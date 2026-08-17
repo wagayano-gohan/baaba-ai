@@ -4,6 +4,7 @@
 // 日付ごとに見出しを立て、その下に「時刻＋予定名」を並べる。
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { EmptyGuide } from '../components/EmptyGuide'
 import { useAuth } from '../contexts/AuthContext'
 import { getDeviceProfileId } from '../lib/deviceToken'
 import { fetchUpcomingEvents } from '../lib/schedule'
@@ -13,6 +14,8 @@ import './EventListScreen.css'
 interface EventListScreenProps {
   /** 「戻る」を押したとき。 */
   onBack: () => void
+  /** 空状態の「話しかける」を押したとき。 */
+  onGoVoice: () => void
 }
 
 type LoadStatus = 'loading' | 'ready' | 'error'
@@ -37,7 +40,7 @@ function groupByDate(events: UpcomingEvent[]): EventDateGroup[] {
   return groups
 }
 
-export function EventListScreen({ onBack }: EventListScreenProps) {
+export function EventListScreen({ onBack, onGoVoice }: EventListScreenProps) {
   const [events, setEvents] = useState<UpcomingEvent[]>([])
   const [status, setStatus] = useState<LoadStatus>('loading')
 
@@ -103,7 +106,11 @@ export function EventListScreen({ onBack }: EventListScreenProps) {
         )}
 
         {status === 'ready' && groups.length === 0 && (
-          <p className="event-list__message">予定はありません</p>
+          <EmptyGuide
+            title="予定はありません"
+            examples={['来週火曜日、立川病院', '明日の10時に美容院']}
+            onAction={onGoVoice}
+          />
         )}
 
         {status === 'ready' &&

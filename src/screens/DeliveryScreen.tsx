@@ -4,6 +4,7 @@
 // 今日届くぶんは行動が必要なので先頭にまとめ、それ以外と見分けられるようにしている。
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { EmptyGuide } from '../components/EmptyGuide'
 import { useAuth } from '../contexts/AuthContext'
 import { getDeviceProfileId } from '../lib/deviceToken'
 import {
@@ -20,6 +21,8 @@ import './DeliveryScreen.css'
 interface DeliveryScreenProps {
   /** 「戻る」を押したとき。 */
   onBack: () => void
+  /** 空状態の「話しかける」を押したとき。 */
+  onGoVoice: () => void
 }
 
 type LoadStatus = 'loading' | 'ready' | 'error'
@@ -45,7 +48,7 @@ function byExpectedAt(a: DeliveryItem, b: DeliveryItem): number {
   return new Date(a.expectedAt).getTime() - new Date(b.expectedAt).getTime()
 }
 
-export function DeliveryScreen({ onBack }: DeliveryScreenProps) {
+export function DeliveryScreen({ onBack, onGoVoice }: DeliveryScreenProps) {
   const [deliveries, setDeliveries] = useState<DeliveryItem[]>([])
   const [status, setStatus] = useState<LoadStatus>('loading')
   // 記録処理中の荷物ID。二重送信を防ぎ、その間ボタンを押せない状態にする。
@@ -175,7 +178,11 @@ export function DeliveryScreen({ onBack }: DeliveryScreenProps) {
         {status === 'ready' && receiveError && <p className="delivery__notice">{receiveError}</p>}
 
         {status === 'ready' && deliveries.length === 0 && (
-          <p className="delivery__message">受け取り予定の荷物はありません</p>
+          <EmptyGuide
+            title="受け取り予定の荷物はありません"
+            examples={['明日、宅配便が届く', '金曜日にお米が届く']}
+            onAction={onGoVoice}
+          />
         )}
 
         {status === 'ready' && todayItems.length > 0 && (

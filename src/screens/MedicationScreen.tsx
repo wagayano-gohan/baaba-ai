@@ -5,6 +5,7 @@
 // 押し間違いでまだ飲んでいないぶんが「済み」になってしまうためである。
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { EmptyGuide } from '../components/EmptyGuide'
 import { useAuth } from '../contexts/AuthContext'
 import { getDeviceProfileId } from '../lib/deviceToken'
 import {
@@ -21,6 +22,8 @@ import './MedicationScreen.css'
 interface MedicationScreenProps {
   /** 「戻る」を押したとき。 */
   onBack: () => void
+  /** 空状態の「話しかける」を押したとき。 */
+  onGoVoice: () => void
 }
 
 type LoadStatus = 'loading' | 'ready' | 'error'
@@ -62,7 +65,7 @@ function groupByDate(items: MedicationItem[]): MedicationDateGroup[] {
   return groups
 }
 
-export function MedicationScreen({ onBack }: MedicationScreenProps) {
+export function MedicationScreen({ onBack, onGoVoice }: MedicationScreenProps) {
   const [medications, setMedications] = useState<MedicationItem[]>([])
   const [status, setStatus] = useState<LoadStatus>('loading')
   // 記録処理中のお薬ID。二重送信を防ぎ、その間ボタンを押せない状態にする。
@@ -174,10 +177,11 @@ export function MedicationScreen({ onBack }: MedicationScreenProps) {
         {status === 'ready' && takeError && <p className="medication__notice">{takeError}</p>}
 
         {status === 'ready' && todayItems.length === 0 && upcomingGroups.length === 0 && (
-          <div className="medication__empty">
-            <p className="medication__message">お薬の登録がありません</p>
-            <p className="medication__empty-note">ご家族に登録してもらってください</p>
-          </div>
+          <EmptyGuide
+            title="お薬はまだ覚えていません"
+            examples={['血圧の薬を朝8時に飲む', '胃薬を夜9時に飲む']}
+            onAction={onGoVoice}
+          />
         )}
 
         {status === 'ready' && (todayItems.length > 0 || upcomingGroups.length > 0) && (

@@ -205,23 +205,24 @@ function App() {
   } else if (screen.name === 'chat') {
     content = <ChatScreen onBack={goHome} />
   } else if (screen.name === 'eventList') {
-    content = <EventListScreen onBack={goHome} />
+    content = <EventListScreen onBack={goHome} onGoVoice={goVoiceRecord} />
   } else if (screen.name === 'taskList') {
-    content = <TaskListScreen onBack={goHome} />
+    content = <TaskListScreen onBack={goHome} onGoVoice={goVoiceRecord} />
   } else if (screen.name === 'shoppingList') {
-    content = <ShoppingListScreen onBack={goHome} />
+    content = <ShoppingListScreen onBack={goHome} onGoVoice={goVoiceRecord} />
   } else if (screen.name === 'medication') {
-    content = <MedicationScreen onBack={goHome} />
+    content = <MedicationScreen onBack={goHome} onGoVoice={goVoiceRecord} />
   } else if (screen.name === 'delivery') {
-    content = <DeliveryScreen onBack={goHome} />
+    content = <DeliveryScreen onBack={goHome} onGoVoice={goVoiceRecord} />
   } else if (screen.name === 'garbage') {
-    content = <GarbageScreen onBack={goHome} />
+    content = <GarbageScreen onBack={goHome} onGoVoice={goVoiceRecord} />
   } else if (screen.name === 'weather') {
-    content = <WeatherScreen onBack={goHome} />
+    // 天気だけは自宅の緯度経度が要り、音声では決められないためAI相談へ渡す。
+    content = <WeatherScreen onBack={goHome} onGoChat={goChat} />
   } else if (screen.name === 'places') {
-    content = <PlacesScreen onBack={goHome} />
+    content = <PlacesScreen onBack={goHome} onGoVoice={goVoiceRecord} />
   } else if (screen.name === 'contacts') {
-    content = <ContactsScreen onBack={goHome} />
+    content = <ContactsScreen onBack={goHome} onGoVoice={goVoiceRecord} />
   } else if (screen.name === 'notes') {
     content = <NotesScreen onBack={goHome} />
   } else if (screen.name === 'family' && Boolean(user)) {

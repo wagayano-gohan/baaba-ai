@@ -357,7 +357,13 @@ export function HomeScreen({ onGoVoice, onGoChat, onGoSettings, onNavigate }: Ho
             </button>
           </div>
         ) : events.length === 0 ? (
-          <p className="home__schedule-empty">本日の予定はありません</p>
+          // ホームは上に大きな音声ボタンがあるため、案内は一行だけ添える。
+          <>
+            <p className="home__schedule-empty">本日の予定はありません</p>
+            <p className="home__schedule-hint">
+              予定を入れるときは「来週火曜日、立川病院」のように話しかけてください
+            </p>
+          </>
         ) : (
           <ul className="home__schedule-list">
             {events.map((event) => (

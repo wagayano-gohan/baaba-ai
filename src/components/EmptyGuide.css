@@ -1,0 +1,75 @@
+/* 空状態の案内（EmptyGuide）。
+   ご本人向け画面すべてで同じ見た目にするため、画面ごとのCSSではなくここにまとめる。
+   状況→例文→ボタンの順に上から読めるよう、中央寄せの1カラムで組む。 */
+
+.empty-guide {
+  margin: 24px 0;
+  padding: 24px 20px;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  text-align: center;
+}
+
+.empty-guide__title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.empty-guide__lead {
+  margin: 14px 0 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-label);
+  line-height: 1.6;
+}
+
+.empty-guide__examples {
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+}
+
+/* 例文は「そのまま声に出せば通る文」。読み上げの手本になるよう強調して置く。 */
+.empty-guide__example {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-tint);
+  color: var(--color-accent-dark);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.empty-guide__button {
+  margin-top: 20px;
+  width: 100%;
+  min-height: 68px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  column-gap: 10px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: #ffffff;
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.4;
+  box-shadow: var(--shadow-float);
+}
+
+.empty-guide__button-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}

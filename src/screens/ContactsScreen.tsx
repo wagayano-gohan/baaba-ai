@@ -1,10 +1,11 @@
 // 連絡先・電話画面。
 //
-// 家族が登録した連絡先を一覧し、その場で電話をかけられるようにする。
+// ご本人が話しかけて覚えさせた連絡先を一覧し、その場で電話をかけられるようにする。
 // 「よく電話する相手（お気に入り）」を上のセクションに大きく出し、
 // 探す手間なく最初の1タップで目的の相手に届くようにしている。
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { EmptyGuide } from '../components/EmptyGuide'
 import { useAuth } from '../contexts/AuthContext'
 import { getDeviceProfileId } from '../lib/deviceToken'
 import { fetchContacts } from '../lib/data'
@@ -14,6 +15,8 @@ import './ContactsScreen.css'
 interface ContactsScreenProps {
   /** 「戻る」を押したとき。 */
   onBack: () => void
+  /** 空状態の「話しかける」を押したとき。 */
+  onGoVoice: () => void
 }
 
 type LoadStatus = 'loading' | 'ready' | 'error'
@@ -72,7 +75,7 @@ function ContactRow({ contact }: ContactRowProps) {
   )
 }
 
-export function ContactsScreen({ onBack }: ContactsScreenProps) {
+export function ContactsScreen({ onBack, onGoVoice }: ContactsScreenProps) {
   const [contacts, setContacts] = useState<ContactItem[]>([])
   const [status, setStatus] = useState<LoadStatus>('loading')
 
@@ -139,12 +142,11 @@ export function ContactsScreen({ onBack }: ContactsScreenProps) {
         )}
 
         {status === 'ready' && contacts.length === 0 && (
-          <div className="contacts__empty">
-            <p className="contacts__message">連絡先はまだ登録されていません</p>
-            <p className="contacts__message contacts__message--sub">
-              ご家族に登録してもらってください
-            </p>
-          </div>
+          <EmptyGuide
+            title="連絡先はまだ覚えていません"
+            examples={['娘の電話番号は090-1234-5678', '田中さんの電話番号は03-1234-5678']}
+            onAction={onGoVoice}
+          />
         )}
 
         {/* お気に入りが無い場合はセクションごと出さない（空の見出しだけが残ると迷うため）。 */}

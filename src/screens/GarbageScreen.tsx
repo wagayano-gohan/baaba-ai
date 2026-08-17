@@ -1,10 +1,11 @@
 // ゴミの日画面。
 //
-// 曜日ごとのゴミ出し設定（ご家族が登録したもの）をもとに、
+// 曜日ごとのゴミ出し設定（ご本人が話しかけて覚えさせたもの）をもとに、
 // 「今日」「明日」を最初に大きく見せ、その下に日曜〜土曜の一覧を置く。
 // 出し忘れの防止が目的のため、判断に必要な今日・明日を画面上部に固定して置いている。
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { EmptyGuide } from '../components/EmptyGuide'
 import { useAuth } from '../contexts/AuthContext'
 import { getDeviceProfileId } from '../lib/deviceToken'
 import { fetchSettings, jstWeekday, weekdayKanji } from '../lib/data'
@@ -14,11 +15,13 @@ import './GarbageScreen.css'
 interface GarbageScreenProps {
   /** 「戻る」を押したとき。 */
   onBack: () => void
+  /** 空状態の「話しかける」を押したとき。 */
+  onGoVoice: () => void
 }
 
 type LoadStatus = 'loading' | 'ready' | 'error'
 
-export function GarbageScreen({ onBack }: GarbageScreenProps) {
+export function GarbageScreen({ onBack, onGoVoice }: GarbageScreenProps) {
   const [garbage, setGarbage] = useState<GarbageSchedule>({})
   const [status, setStatus] = useState<LoadStatus>('loading')
 
@@ -94,10 +97,11 @@ export function GarbageScreen({ onBack }: GarbageScreenProps) {
         )}
 
         {status === 'ready' && !hasSchedule && (
-          <div className="garbage__empty">
-            <p className="garbage__empty-title">ゴミの日はまだ登録されていません</p>
-            <p className="garbage__empty-note">ご家族に登録してもらってください</p>
-          </div>
+          <EmptyGuide
+            title="ゴミの日はまだ覚えていません"
+            examples={['火曜日は燃えるゴミの日', '金曜日はプラスチックの日']}
+            onAction={onGoVoice}
+          />
         )}
 
         {status === 'ready' && hasSchedule && (

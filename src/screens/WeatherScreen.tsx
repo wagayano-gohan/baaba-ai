@@ -2,9 +2,10 @@
 //
 // 出かける前に「何を着ればよいか」「傘が要るか」を判断できることが目的のため、
 // 数値よりも天気の要約と服装アドバイスを大きく見せる。
-// 位置情報は端末のGPSではなく、ご家族が登録した自宅（home）の緯度経度を使う。
+// 位置情報は端末のGPSではなく、profilesに登録された自宅（home）の緯度経度を使う。
 
 import { useCallback, useEffect, useState } from 'react'
+import { EmptyGuide } from '../components/EmptyGuide'
 import { useAuth } from '../contexts/AuthContext'
 import { getDeviceProfileId } from '../lib/deviceToken'
 import { fetchSettings, fetchTodayWeather } from '../lib/data'
@@ -14,6 +15,8 @@ import './WeatherScreen.css'
 interface WeatherScreenProps {
   /** 「戻る」を押したとき。 */
   onBack: () => void
+  /** 自宅の緯度経度が無いときに「AIに相談する」を押したとき。 */
+  onGoChat: () => void
 }
 
 type LoadStatus = 'loading' | 'ready' | 'error'
@@ -114,7 +117,7 @@ function WeatherIcon({ code }: { code: number }) {
   )
 }
 
-export function WeatherScreen({ onBack }: WeatherScreenProps) {
+export function WeatherScreen({ onBack, onGoChat }: WeatherScreenProps) {
   const [home, setHome] = useState<HomeLocation | null>(null)
   const [weather, setWeather] = useState<WeatherToday | null>(null)
   const [status, setStatus] = useState<LoadStatus>('loading')
@@ -194,11 +197,15 @@ export function WeatherScreen({ onBack }: WeatherScreenProps) {
           </div>
         )}
 
+        {/* 自宅の緯度経度が無いとこの画面では天気を出せない。
+            緯度経度は音声では決められないため、その場で答えを得られるAI相談へ案内する。 */}
         {status === 'ready' && !location && (
-          <div className="weather__empty">
-            <p className="weather__empty-title">お住まいの地域が登録されていません</p>
-            <p className="weather__empty-note">ご家族に登録してもらってください</p>
-          </div>
+          <EmptyGuide
+            title="お住まいの地域はまだ覚えていません"
+            examples={['立川の今日の天気を教えて', '明日は傘がいる？']}
+            actionLabel="AIに相談する"
+            onAction={onGoChat}
+          />
         )}
 
         {status === 'ready' && location && weather && (

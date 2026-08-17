@@ -5,6 +5,7 @@
 // 写真は署名URL（有効期限5分）でしか取得できないため、「写真を見る」を押すたびに取り直す。
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { EmptyGuide } from '../components/EmptyGuide'
 import { useAuth } from '../contexts/AuthContext'
 import { getDeviceProfileId } from '../lib/deviceToken'
 import { addNote, deleteNote, fetchNoteImageUrl, fetchNotes, formatDateTimeLabel } from '../lib/data'
@@ -192,7 +193,10 @@ export function NotesScreen({ onBack }: NotesScreenProps) {
         {status === 'ready' && deleteError && <p className="notes__notice">{deleteError}</p>}
 
         {status === 'ready' && notes.length === 0 && (
-          <p className="notes__message">メモはまだありません</p>
+          <EmptyGuide
+            title="メモはまだありません"
+            examples={['〇〇さんに電話する', '回覧板を隣に回す']}
+          />
         )}
 
         {status === 'ready' && notes.length > 0 && (
