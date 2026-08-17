@@ -149,6 +149,8 @@
   font-weight: 400;
   color: var(--color-sublabel);
   line-height: 1.6;
+  /* 話しかけ方の案内を添えるぶん長くなるため、折り返して全文を見せる。 */
+  word-break: break-word;
 }
 
 /* tel: リンクはa要素でないと発信できないため、a要素をボタンの見た目に整える。

@@ -61,7 +61,10 @@ function ContactRow({ contact }: ContactRowProps) {
         {phoneNumber ? (
           <span className="contacts__number">{formatPhoneNumber(phoneNumber)}</span>
         ) : (
-          <span className="contacts__no-number">電話番号が登録されていません</span>
+          // 番号だけが欠けている行。ここも行き止まりにせず、話しかけ方をその場で示す。
+          <span className="contacts__no-number">
+            電話番号はまだ覚えていません。「{contact.name}の電話番号は090…」と話しかけてください
+          </span>
         )}
       </div>
 
